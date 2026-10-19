@@ -14,6 +14,21 @@ Interactive 3D typewriter for the web. The visitor types (physical keyboard or c
 - Never change the model contract (SPEC.md section 5) on your own.
 - Don't add dependencies without asking.
 
+## Model and effort
+
+Manuel chooses model and effort at the start of each session. You can't change them, but you can recommend. Default setup: Sonnet 5.5 at medium effort.
+
+- When you propose a slice plan, add one line recommending model and effort for that slice.
+- Planning, architecture, store design, carriage and paper logic: Opus, or Sonnet at high effort.
+- Routine implementation (key animation, UI overlay, glue code): Sonnet, medium.
+- Tricky bugs (pivots and transforms, canvas-to-UV mapping, timing): Sonnet at high effort first, Opus if still stuck.
+- Mechanical Blender work (renaming, contract check): Sonnet, low or medium.
+- Review of a finished slice: Opus or high effort, in a fresh session.
+- Chores (.gitignore, commit messages, small renames): low or medium.
+- When something goes wrong, first check whether the prompt, SPEC.md or CLAUDE.md is unclear or wrong. Then suggest raising effort. Suggest a bigger model last. A bigger model or higher effort doesn't fix a wrong input.
+- If you fail twice at the same problem, stop and say so. Suggest the next step (clearer input, higher effort, or Opus) instead of trying more variations.
+- Changing effort mid-session loses the prompt cache, so prefer deciding at session start.
+
 ## Stack
 
 three, @react-three/fiber, @react-three/drei, React, TypeScript, Vite, Zustand. Model as GLB from Blender, components generated with gltfjsx.

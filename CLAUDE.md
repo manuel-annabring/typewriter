@@ -33,20 +33,26 @@ Manuel chooses model and effort at the start of each session. You can't change t
 
 three, @react-three/fiber, @react-three/drei, React, TypeScript, Vite, Zustand. Model as GLB from Blender, components generated with gltfjsx.
 
+Installed (all pinned exactly): react and react-dom 19.3.1, three 0.186.1 (@types/three 0.186.0), @react-three/fiber 9.8.2, @react-three/drei 10.7.9, zustand 5.0.15, vite 8.3.4, @vitejs/plugin-react 6.1.2, typescript 6.0.3, eslint 10.13.0 with typescript-eslint 8.72.0. Node v26.7.0 (Vite needs ^20.19 or >=22.12).
+
+- TypeScript stays on 6.0.x because typescript-eslint 8.72 supports `<6.1.0`. Don't move to TypeScript 7 until typescript-eslint supports it.
+
 - Exact installed versions in `package.json` are the source of truth. Pin exact versions (no `^`).
 - Before writing r3f, drei or three code, check the installed versions. Do not mix API patterns from other versions.
 - The r3f major version must match the React major version.
-- drei: stay on the stable 10.x line, not the 11 alpha.
+- drei: stay on the stable 10.x line, not alpha prereleases.
 - Don't upgrade packages unless asked.
 - Use the Node version required by the installed Vite.
 
-## Commands (create these scripts during setup)
+## Commands
 
 - `npm run dev`: dev server
-- `npm run build`: production build
-- `npm run typecheck`: `tsc --noEmit`
-- `npm run lint`
+- `npm run build`: `tsc -b && vite build`
+- `npm run typecheck`: `tsc --noEmit` for `tsconfig.app.json` and `tsconfig.node.json`
+- `npm run lint`: `eslint .`
 - `npm run preview`: serve the production build
+
+Known noise: the build warns that the main chunk is over 500 kB (three and drei), and the browser console shows `THREE.Clock: This module has been deprecated`, which comes from r3f 9.8.2 itself. Both are expected until r3f is updated.
 
 ## Folder structure
 

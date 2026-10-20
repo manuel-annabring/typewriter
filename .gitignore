@@ -28,5 +28,8 @@ Thumbs.db
 *.blend1
 *.blend@
 
+# Python bytecode from the Blender scripts
+__pycache__/
+
 # Claude Code local config
 .claude/

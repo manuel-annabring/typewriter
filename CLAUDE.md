@@ -51,6 +51,15 @@ Installed (all pinned exactly): react and react-dom 19.3.1, three 0.186.1 (@type
 - `npm run typecheck`: `tsc --noEmit` for `tsconfig.app.json` and `tsconfig.node.json`
 - `npm run lint`: `eslint .`
 - `npm run preview`: serve the production build
+- `npm run gen:model`: regenerate `src/typewriter/TypewriterModel.generated.tsx` from `public/models/typewriter.glb` (gltfjsx 6.5.3 via npx, plus patches for React 19 and strict TS). Never edit the generated file by hand.
+
+Blender (headless, `B=/Applications/Blender.app/Contents/MacOS/Blender`, scripts in `tools/blender/`):
+
+- Contract check: `$B -b tools/blender/typewriter-blockout.blend --python tools/blender/contract_check.py`
+- Export (runs the check first, refuses on errors): `$B -b tools/blender/typewriter-blockout.blend --python tools/blender/export_glb.py`
+- Previews (Workbench PNGs, does not save the .blend): `$B -b tools/blender/typewriter-blockout.blend --python tools/blender/render_preview.py -- <output_dir>`
+- `build_blockout.py` is a one-time seed. `tools/blender/typewriter-blockout.blend` is committed and is the source of truth; re-running the script overwrites hand edits.
+- After changing the model: export, then `npm run gen:model`.
 
 Known noise: the build warns that the main chunk is over 500 kB (three and drei), and the browser console shows `THREE.Clock: This module has been deprecated`, which comes from r3f 9.8.2 itself. Both are expected until r3f is updated.
 
@@ -102,3 +111,8 @@ tools/blender/      contract check script, export notes
 ## Lessons learned
 
 (Add hard-won lessons here as they come up, for example "Don't create materials inside useFrame".)
+
+- Tooling: ESLint 10 flat config (not oxlint, which the create-vite template uses). `tsconfig.app.json` is strict plus `noUncheckedIndexedAccess`. `@types/node` is not installed, so `tsconfig.node.json` has `types: []`; don't use Node APIs in `vite.config.ts` or `eslint.config.js` without asking.
+- `npm install` blocks the optional `fsevents` install script (allowScripts). This is harmless.
+- `.claude/` is gitignored. `.claude/launch.json` (dev server on port 5173) is for the in-app browser preview only.
+- The create-vite template targets TS 7. We deliberately did not copy that choice (see Stack).

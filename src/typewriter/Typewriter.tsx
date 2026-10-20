@@ -5,6 +5,7 @@ import { holdKey } from '../input/dispatchKey.ts'
 import { assertModelContract, KEY_NODE_NAMES } from './contract.ts'
 import { Model } from './TypewriterModel.generated.tsx'
 import { useKeyPressAnimation } from './useKeyPressAnimation.ts'
+import { usePaperTexture } from './usePaperTexture.ts'
 
 const KEY_NAMES = new Set(KEY_NODE_NAMES)
 
@@ -26,6 +27,7 @@ export function Typewriter(props: ThreeElements['group']) {
     if (import.meta.env.DEV && root.current) assertModelContract(root.current)
   }, [])
   useKeyPressAnimation(root)
+  usePaperTexture(root)
 
   const get = useThree((state) => state.get)
   const setCursor = useCallback(

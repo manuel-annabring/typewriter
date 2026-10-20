@@ -50,6 +50,7 @@ Installed (all pinned exactly): react and react-dom 19.3.1, three 0.186.1 (@type
 - `npm run build`: `tsc -b && vite build`
 - `npm run typecheck`: `tsc --noEmit` for `tsconfig.app.json` and `tsconfig.node.json`
 - `npm run lint`: `eslint .`
+- `npm test`: vitest unit tests (`src/**/*.test.ts`)
 - `npm run preview`: serve the production build
 - `npm run gen:model`: regenerate `src/typewriter/TypewriterModel.generated.tsx` from `public/models/typewriter.glb` (gltfjsx 6.5.3 via npx, plus patches for React 19 and strict TS). Never edit the generated file by hand.
 
@@ -70,12 +71,14 @@ reference/          concept sheet (not shipped)
 public/models/      typewriter.glb
 src/
   scene/            Canvas, lights, camera, environment
-  typewriter/       model components, Key, Carriage, Lever, Paper
+  typewriter/       Typewriter.tsx (wrapper, behavior), contract.ts (required node names),
+                    TypewriterModel.generated.tsx (generated, never hand-edit), Key, Carriage, Lever, Paper
   store/            Zustand typing store
   input/            keyboard and pointer, dispatch store actions only
   lib/              pure helpers (paper grid, glyph jitter, key mapping), unit-testable
-  ui/               HTML overlay (hints, buttons)
-tools/blender/      contract check script, export notes
+  ui/               HTML overlay (Loader, hints, buttons)
+tools/blender/      headless Blender scripts + typewriter-blockout.blend
+tools/gen-model.mjs gltfjsx wrapper behind `npm run gen:model`
 ```
 
 ## Code rules
@@ -99,6 +102,12 @@ tools/blender/      contract check script, export notes
 - The Blender MCP tools run arbitrary Python. Use the official Blender Lab server (Blender 5.1+), work on a copy of the `.blend`, and never open untrusted files while connected.
 - Run the contract check (names, applied transforms, origins) before every export.
 - Export glTF binary (`.glb`), +Y up.
+- Workflow: headless scripts (Blender 5.2 LTS installed; no Blender MCP connected). Manuel hand-edits the `.blend` for real modeling (slice 6); the MCP is optional then. Hand edits must keep object and material names, applied transforms and origins.
+- Blender coordinates: Z up, keyboard at -Y; the exporter maps this to glTF +Y up, front facing +Z.
+- Approved contract interpretations: `Paper` is a child of `Carriage`; `Lever` is top-level; `StrikePoint` is an Empty under `Body` at x=0; `Carriage` origin is on the platen axis at its rest position (x=0.085, so the carriage overhangs the body's right edge at rest); special keys are Space, Tab, Enter, Backspace, Shift_L, Shift_R, Comma, Period; keyboard is flat (identity rotations), rows stepped in height.
+- Node names live in two places that must stay in sync: `tools/blender/contract_spec.py` and `src/typewriter/contract.ts`.
+- Multi-material objects (all letter/digit keys, Lever) export as a group named like the object with child meshes `Key_A_1`, `Key_A_2`. Find them with `getObjectByName('Key_A')`, never by the child names.
+- gltfjsx stays pinned and one-off via `npx` (not a dependency); regenerate only through `npm run gen:model`, which patches gltfjsx 6.5.3 output for React 19 and strict TS and fails if its output changes shape.
 
 ## Verify before saying "done"
 
@@ -116,3 +125,6 @@ tools/blender/      contract check script, export notes
 - `npm install` blocks the optional `fsevents` install script (allowScripts). This is harmless.
 - `.claude/` is gitignored. `.claude/launch.json` (dev server on port 5173) is for the in-app browser preview only.
 - The create-vite template targets TS 7. We deliberately did not copy that choice (see Stack).
+- If another dev server holds port 5173, `preview_start` falls back to 5174. Use whatever port it reports.
+- The dev-only contract guard throws if a node is missing, which unmounts the Canvas and leaves the loader overlay on screen. The error is in the console.
+- Metal materials render black until an environment map exists (slice 6 / scene polish). Not a bug.

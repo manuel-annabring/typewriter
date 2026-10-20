@@ -4,6 +4,7 @@ import type { Group, Object3D } from 'three'
 import { holdKey } from '../input/dispatchKey.ts'
 import { assertModelContract, KEY_NODE_NAMES } from './contract.ts'
 import { Model } from './TypewriterModel.generated.tsx'
+import { useKeyPressAnimation } from './useKeyPressAnimation.ts'
 
 const KEY_NAMES = new Set(KEY_NODE_NAMES)
 
@@ -24,11 +25,19 @@ export function Typewriter(props: ThreeElements['group']) {
   useLayoutEffect(() => {
     if (import.meta.env.DEV && root.current) assertModelContract(root.current)
   }, [])
+  useKeyPressAnimation(root)
 
   const get = useThree((state) => state.get)
   const setCursor = useCallback(
     (value: '' | 'pointer') => {
       get().gl.domElement.style.cursor = value
+    },
+    [get],
+  )
+  const setOrbitEnabled = useCallback(
+    (enabled: boolean) => {
+      const controls = get().controls
+      if (controls && 'enabled' in controls) controls.enabled = enabled
     },
     [get],
   )
@@ -58,8 +67,15 @@ export function Typewriter(props: ThreeElements['group']) {
     if (!name) return
     e.stopPropagation()
     releaseHeld.current?.()
-    releaseHeld.current = holdKey(name)
-  }, [])
+    const releaseKey = holdKey(name)
+    // OrbitControls listens on the DOM, so stopPropagation above doesn't stop
+    // it. Pause it for the duration of the press so a drag doesn't spin the camera.
+    setOrbitEnabled(false)
+    releaseHeld.current = () => {
+      releaseKey()
+      setOrbitEnabled(true)
+    }
+  }, [setOrbitEnabled])
 
   // Over and move both assert the cursor: on entry from one mesh of a key to
   // another, an out can land after an over, and move corrects that.

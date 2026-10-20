@@ -27,3 +27,6 @@ Thumbs.db
 # Blender backups
 *.blend1
 *.blend@
+
+# Claude Code local config
+.claude/

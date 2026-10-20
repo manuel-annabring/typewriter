@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:model": "node tools/gen-model.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",

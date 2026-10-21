@@ -22,6 +22,9 @@ import contract_spec as spec  # noqa: E402
 TOL = 1e-4  # transforms
 ORIGIN_TOL = 0.001  # key origin vs. bbox center (1 mm)
 PIVOT_TOL = 0.006  # lever hinge vs. nearest vertex, carriage vs. platen center
+ROUND_TOL = 0.001  # platen y and z extents may differ by 1 mm (polygonal cylinder)
+TANGENT_TOL = 0.002  # sheet plane vs. platen surface (SPEC: 22.6 mm plane, 22 mm radius)
+AXIS_TOL = 1e-4  # 1 - cos of the allowed angle between the sheet's width and the x axis
 
 
 def _local_bbox(obj):
@@ -86,7 +89,8 @@ def run_check():
     if strike is not None and strike.type != "EMPTY":
         errors.append("StrikePoint should be an Empty")
 
-    # 4. Origins.
+    # 4. Origins (and the platen axis, which the paper check below reads).
+    platen_radius = None
     for name in spec.KEY_NAMES:
         o = objs.get(name)
         if o is None or o.type != "MESH":
@@ -107,6 +111,16 @@ def run_check():
         d = _world_bbox_center(platen) - carriage.matrix_world.translation
         if d.length > PIVOT_TOL:
             errors.append("Carriage origin must sit on the platen axis at the carriage rest position")
+        # The platen is a cylinder about x: round in y/z, longer along x than it is thick.
+        lo, hi = _local_bbox(platen)
+        ext = hi - lo
+        if abs(ext.y - ext.z) > ROUND_TOL or ext.x <= ext.y:
+            errors.append(
+                f"Platen: axis must run along x (extents x={ext.x*1000:.0f}, y={ext.y*1000:.0f}, "
+                f"z={ext.z*1000:.0f} mm; y and z must match and be shorter than x)"
+            )
+        else:
+            platen_radius = (ext.y + ext.z) / 4
     for name in ("Body", "Base"):
         o = objs.get(name)
         if o is not None and o.matrix_world.translation.length > 0.005:
@@ -169,6 +183,24 @@ def run_check():
                     off = max(abs((paper.matrix_world @ v.co - c00).dot(normal)) for v in paper.data.vertices)
                     if off > 0.0005:
                         errors.append(f"Paper must be flat (a vertex is {off*1000:.2f} mm off the plane)")
+
+                    # Phase 2 bends the sheet around the platen (SPEC section 5, paper path):
+                    # the sheet must run parallel to x and touch the platen's tangent plane.
+                    across = (c10 - c00).normalized()
+                    if abs(across.dot(Vector((1.0, 0.0, 0.0)))) < 1 - AXIS_TOL:
+                        errors.append("Paper: its width (u) must run along x, parallel to the platen axis")
+                    elif carriage is not None:
+                        axis_pos = carriage.matrix_world.translation
+                        gap = abs((axis_pos - c00).dot(normal))
+                        up = (c01 - c00).normalized()
+                        foot_v = (axis_pos - c00).dot(up) / h
+                        if not 0.0 < foot_v < 1.0:
+                            errors.append("Paper: the platen's tangent point must lie within the sheet's height")
+                        if platen_radius is not None and not -TANGENT_TOL < gap - platen_radius < TANGENT_TOL:
+                            errors.append(
+                                f"Paper plane is {gap*1000:.1f} mm from the platen axis, platen radius is "
+                                f"{platen_radius*1000:.1f} mm (must be tangent within {TANGENT_TOL*1000:.0f} mm)"
+                            )
 
     # 7. Budget and leftover modifiers.
     tris = 0

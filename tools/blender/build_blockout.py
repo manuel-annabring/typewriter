@@ -5,9 +5,9 @@
 
 Default output: tools/blender/typewriter-blockout.blend
 
-Until the .blend is hand-edited (slice 6), this script is the source of the .blend and
-contract changes go here, then re-run. Once the .blend is hand-edited, the .blend is the
-source of truth: re-running this script overwrites those edits.
+RETIRED since slice 6a. tools/blender/typewriter.blend is hand-edited and is the source of
+truth; this script only built the original blockout. Do not point it at typewriter.blend:
+that would overwrite the hand edits. Kept for reference.
 
 Blender is Z up. Modeling convention here: X right, Y depth (keyboard at -Y, platen at
 +Y), Z up. The glTF exporter converts this to +Y up, front facing +Z. Units are meters.

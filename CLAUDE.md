@@ -58,10 +58,10 @@ Installed (all pinned exactly): react and react-dom 19.3.1, three 0.186.1 (@type
 
 Blender (headless, `B=/Applications/Blender.app/Contents/MacOS/Blender`, scripts in `tools/blender/`):
 
-- Contract check: `$B -b tools/blender/typewriter-blockout.blend --python tools/blender/contract_check.py`
-- Export (runs the check first, refuses on errors): `$B -b tools/blender/typewriter-blockout.blend --python tools/blender/export_glb.py`
-- Previews (Workbench PNGs, does not save the .blend): `$B -b tools/blender/typewriter-blockout.blend --python tools/blender/render_preview.py -- <output_dir>`
-- `build_blockout.py` builds `tools/blender/typewriter-blockout.blend`. Until the .blend is hand-edited (slice 6), the script is the source: change the model there and re-run (it runs the contract check and overwrites the .blend). After the first hand edit the .blend is the source of truth and re-running the script would overwrite those edits, so don't.
+- Contract check: `$B -b tools/blender/typewriter.blend --python tools/blender/contract_check.py`
+- Export (runs the check first, refuses on errors): `$B -b tools/blender/typewriter.blend --python tools/blender/export_glb.py`
+- Previews (Workbench PNGs, does not save the .blend): `$B -b tools/blender/typewriter.blend --python tools/blender/render_preview.py -- <output_dir>`
+- `tools/blender/typewriter.blend` is the source of truth (hand-edited since slice 6a). `build_blockout.py` is retired: it built the original blockout into `typewriter-blockout.blend` and must not be re-run against `typewriter.blend`. Keep it for reference only.
 - After changing the model: export, then `npm run gen:model`.
 
 Known noise: the build warns that the main chunk is over 500 kB (three and drei), and the browser console shows `THREE.Clock: This module has been deprecated`, which comes from r3f 9.8.2 itself. Both are expected until r3f is updated.
@@ -79,7 +79,7 @@ src/
   input/            keyboard and pointer, dispatch store actions only
   lib/              pure helpers (paper grid, glyph jitter, key mapping), unit-testable
   ui/               HTML overlay (Loader, hints, buttons)
-tools/blender/      headless Blender scripts + typewriter-blockout.blend
+tools/blender/      headless Blender scripts + typewriter.blend (source of truth)
 tools/gen-model.mjs gltfjsx wrapper behind `npm run gen:model`
 ```
 

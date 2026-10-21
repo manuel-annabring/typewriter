@@ -16,7 +16,7 @@ export const LEFT_MARGIN_MM = 20
 export const TOP_MARGIN_MM = 25
 export const COLS = 66
 export const ROWS = 38
-/** Column where the bell will ring (slice 5). */
+/** Column where the bell rings (silent until the sound slice). */
 export const BELL_COL = 60
 
 export const INK = '#1b1b20'
@@ -102,7 +102,20 @@ export function advance(cursor: Cursor): Cursor | null {
   return cursor.col >= COLS ? null : { row: cursor.row, col: cursor.col + 1 }
 }
 
-/** Carriage return plus line feed, state only. Null on the last row. */
-export function nextLine(cursor: Cursor): Cursor | null {
-  return cursor.row + 1 >= ROWS ? null : { row: cursor.row + 1, col: 0 }
+/**
+ * Carriage return plus line feed, state only. On the last row the paper has no
+ * room to feed, so the carriage returns and the next line overstrikes that row.
+ */
+export function nextLine(cursor: Cursor): Cursor {
+  return { row: Math.min(cursor.row + 1, ROWS - 1), col: 0 }
+}
+
+/** Moves the carriage back one column without erasing. Null at column 0. */
+export function back(cursor: Cursor): Cursor | null {
+  return cursor.col <= 0 ? null : { row: cursor.row, col: cursor.col - 1 }
+}
+
+/** True when a forward move lands on or passes the bell column on the same row. */
+export function crossesBell(prev: Cursor, next: Cursor): boolean {
+  return prev.row === next.row && prev.col < BELL_COL && next.col >= BELL_COL
 }

@@ -127,4 +127,6 @@ tools/gen-model.mjs gltfjsx wrapper behind `npm run gen:model`
 - The create-vite template targets TS 7. We deliberately did not copy that choice (see Stack).
 - If another dev server holds port 5173, `preview_start` falls back to 5174. Use whatever port it reports.
 - The dev-only contract guard throws if a node is missing, which unmounts the Canvas and leaves the loader overlay on screen. The error is in the console.
+- Slice 5 stopgap: `Mat_Paper` has a clipping plane 8 mm below the strike point (set in `useCarriageAnimation`), because the flat sheet would otherwise hang out of the machine. It is temporary; the planned replacement (whole sheet visible, wrapped around the platen) is listed in SPEC section 4, Phase 2.
+- The carriage hook also slides the `Lever` (top-level in the contract) by the carriage's offset from rest, so the lever stays at the carriage's left end.
 - Metal materials render black until an environment map exists (slice 6 / scene polish). Not a bug.

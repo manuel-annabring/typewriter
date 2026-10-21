@@ -1,15 +1,16 @@
 import { create } from 'zustand'
-import { advance, COLS, nextLine, printChar } from '../lib/paperGrid.ts'
+import { advance, back, COLS, crossesBell, nextLine, printChar } from '../lib/paperGrid.ts'
 
 const LOG_LIMIT = 8
 const SHIFT_KEYS: readonly string[] = ['Key_Shift_L', 'Key_Shift_R']
 
 interface TypewriterState {
-  // SPEC section 6. Paper and carriage logic arrive in slices 4 and 5.
+  // SPEC section 6. The carriage position is derived from `cursor`, not stored.
   lines: string[]
   cursor: { row: number; col: number }
-  carriageOffset: number
   status: 'typing' | 'locked'
+  /** Counts bell events (cursor reaching BELL_COL). Silent in Phase 1; the sound slice subscribes to it. */
+  bellSeq: number
   /** The glyph printed by the latest typeChar. The paper draws just this one; null means redraw from `lines`. */
   lastPrint: { row: number; col: number; char: string; seq: number } | null
   /** Contract node names (e.g. 'Key_A') currently held down. Slice 3 animates from this. */
@@ -32,8 +33,8 @@ const addLog = (log: readonly string[], entry: string) => [entry, ...log].slice(
 export const useTypewriterStore = create<TypewriterState>()((set) => ({
   lines: [''],
   cursor: { row: 0, col: 0 },
-  carriageOffset: 0,
   status: 'typing',
+  bellSeq: 0,
   lastPrint: null,
   pressedKeys: [],
   lastChar: null,
@@ -56,6 +57,7 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
         lines: next.lines,
         cursor: next.cursor,
         status: next.cursor.col >= COLS ? 'locked' : 'typing',
+        bellSeq: crossesBell(s.cursor, next.cursor) ? s.bellSeq + 1 : s.bellSeq,
         lastPrint: { row, col, char, seq: (s.lastPrint?.seq ?? 0) + 1 },
         lastChar: char,
         log: addLog(s.log, `typeChar '${char}'`),
@@ -65,15 +67,29 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
     set((s) => {
       const cursor = advance(s.cursor)
       if (!cursor) return { log: addLog(s.log, 'space ignored') }
-      return { cursor, status: cursor.col >= COLS ? 'locked' : 'typing', lastChar: ' ', log: addLog(s.log, 'space') }
+      return {
+        cursor,
+        status: cursor.col >= COLS ? 'locked' : 'typing',
+        bellSeq: crossesBell(s.cursor, cursor) ? s.bellSeq + 1 : s.bellSeq,
+        lastChar: ' ',
+        log: addLog(s.log, 'space'),
+      }
     }),
-  // State only; the carriage slide and line feed motion arrive in slice 5.
+  // State only; useCarriageAnimation derives the slide and the line feed from `cursor`.
   returnCarriage: () =>
     set((s) => {
       const cursor = nextLine(s.cursor)
-      if (!cursor) return { log: addLog(s.log, 'returnCarriage ignored') }
+      if (cursor.row === s.cursor.row && cursor.col === s.cursor.col) {
+        return { log: addLog(s.log, 'returnCarriage ignored') }
+      }
       return { cursor, status: 'typing', log: addLog(s.log, 'returnCarriage') }
     }),
-  backspace: () => set((s) => ({ log: addLog(s.log, 'backspace') })),
+  // Authentic: moves the carriage back one column without erasing; typing over it overstrikes.
+  backspace: () =>
+    set((s) => {
+      const cursor = back(s.cursor)
+      if (!cursor) return { log: addLog(s.log, 'backspace ignored') }
+      return { cursor, status: 'typing', log: addLog(s.log, 'backspace') }
+    }),
   newSheet: () => set((s) => ({ log: addLog(s.log, 'newSheet') })),
 }))

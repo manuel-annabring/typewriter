@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
-import { holdKey } from './dispatchKey.ts'
+import { holdKey, pressKey } from './dispatchKey.ts'
 
 const pressed = () => useTypewriterStore.getState().pressedKeys
 
@@ -37,5 +37,19 @@ describe('holdKey', () => {
     release()
     release()
     expect(pressed()).toEqual([])
+  })
+})
+
+describe('pressKey', () => {
+  beforeEach(() => {
+    useTypewriterStore.setState({ pressedKeys: [], cursor: { row: 0, col: 4 }, status: 'typing' })
+  })
+
+  it('treats the lever like Enter: return the carriage and feed a line', () => {
+    pressKey('Lever')
+    expect(useTypewriterStore.getState().cursor).toEqual({ row: 1, col: 0 })
+    useTypewriterStore.setState({ pressedKeys: [], cursor: { row: 0, col: 4 } })
+    pressKey('Key_Enter')
+    expect(useTypewriterStore.getState().cursor).toEqual({ row: 1, col: 0 })
   })
 })

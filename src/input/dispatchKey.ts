@@ -10,6 +10,7 @@ export function pressKey(name: string): void {
       s.space()
       break
     case 'Key_Enter':
+    case 'Lever': // the 3D lever is not a key, but it is the same action
       s.returnCarriage()
       break
     case 'Key_Backspace':

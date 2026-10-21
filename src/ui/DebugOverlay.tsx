@@ -1,3 +1,4 @@
+import { carriageShiftM } from '../lib/carriage.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
 // Slice 2 debug view of the store. Dev only.
@@ -7,7 +8,7 @@ export default function DebugOverlay() {
   const log = useTypewriterStore((s) => s.log)
   const status = useTypewriterStore((s) => s.status)
   const cursor = useTypewriterStore((s) => s.cursor)
-  const carriageOffset = useTypewriterStore((s) => s.carriageOffset)
+  const bellSeq = useTypewriterStore((s) => s.bellSeq)
 
   return (
     <pre
@@ -27,7 +28,8 @@ export default function DebugOverlay() {
     >
       {`status:   ${status}
 cursor:   row ${cursor.row}, col ${cursor.col}
-carriage: ${carriageOffset}
+carriage: -${(carriageShiftM(cursor.col) * 1000).toFixed(2)} mm from rest
+bell:     ${bellSeq}
 last:     ${lastChar === null ? '-' : JSON.stringify(lastChar)}
 pressed:  ${pressedKeys.length ? pressedKeys.join(' ') : '-'}
 log:

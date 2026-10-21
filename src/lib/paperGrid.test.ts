@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   advance,
+  back,
+  BELL_COL,
   cellOrigin,
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   COLS,
+  crossesBell,
   glyphJitter,
   isPrintable,
   nextLine,
@@ -92,8 +95,26 @@ describe('advance and nextLine', () => {
     expect(advance({ row: 0, col: COLS - 1 })).toEqual({ row: 0, col: COLS })
     expect(advance({ row: 0, col: COLS })).toBeNull()
   })
-  it('feeds a line and stops on the last row', () => {
+  it('feeds a line, and on the last row only returns the carriage', () => {
     expect(nextLine({ row: 3, col: 10 })).toEqual({ row: 4, col: 0 })
-    expect(nextLine({ row: ROWS - 1, col: 0 })).toBeNull()
+    expect(nextLine({ row: ROWS - 1, col: 40 })).toEqual({ row: ROWS - 1, col: 0 })
+  })
+})
+
+describe('back', () => {
+  it('steps one column back and stops at column 0', () => {
+    expect(back({ row: 2, col: 5 })).toEqual({ row: 2, col: 4 })
+    expect(back({ row: 2, col: 0 })).toBeNull()
+  })
+})
+
+describe('crossesBell', () => {
+  it('fires once, on the step that reaches the bell column', () => {
+    expect(crossesBell({ row: 0, col: BELL_COL - 1 }, { row: 0, col: BELL_COL })).toBe(true)
+    expect(crossesBell({ row: 0, col: BELL_COL }, { row: 0, col: BELL_COL + 1 })).toBe(false)
+    expect(crossesBell({ row: 0, col: 3 }, { row: 0, col: 4 })).toBe(false)
+  })
+  it('does not fire for a move to another row', () => {
+    expect(crossesBell({ row: 0, col: BELL_COL - 1 }, { row: 1, col: 0 })).toBe(false)
   })
 })

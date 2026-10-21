@@ -4,15 +4,18 @@ import type { Group, Object3D } from 'three'
 import { holdKey } from '../input/dispatchKey.ts'
 import { assertModelContract, KEY_NODE_NAMES } from './contract.ts'
 import { Model } from './TypewriterModel.generated.tsx'
+import { useCarriageAnimation } from './useCarriageAnimation.ts'
 import { useKeyPressAnimation } from './useKeyPressAnimation.ts'
+import { useLeverAnimation } from './useLeverAnimation.ts'
 import { usePaperTexture } from './usePaperTexture.ts'
 
-const KEY_NAMES = new Set(KEY_NODE_NAMES)
+// The 3D keys and the carriage return lever are what the pointer can press.
+const PRESSABLE_NAMES = new Set([...KEY_NODE_NAMES, 'Lever'])
 
-/** Walks up from a hit mesh (e.g. Key_A_1) to the key node named in the contract (Key_A). */
-function keyNameOf(object: Object3D): string | null {
+/** Walks up from a hit mesh (e.g. Key_A_1) to the pressable node named in the contract (Key_A). */
+function pressableOf(object: Object3D): string | null {
   for (let o: Object3D | null = object; o; o = o.parent) {
-    if (KEY_NAMES.has(o.name)) return o.name
+    if (PRESSABLE_NAMES.has(o.name)) return o.name
   }
   return null
 }
@@ -28,6 +31,8 @@ export function Typewriter(props: ThreeElements['group']) {
   }, [])
   useKeyPressAnimation(root)
   usePaperTexture(root)
+  useCarriageAnimation(root)
+  useLeverAnimation(root)
 
   const get = useThree((state) => state.get)
   const setCursor = useCallback(
@@ -65,7 +70,7 @@ export function Typewriter(props: ThreeElements['group']) {
   }, [setCursor])
 
   const onPointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
-    const name = keyNameOf(e.object)
+    const name = pressableOf(e.object)
     if (!name) return
     e.stopPropagation()
     releaseHeld.current?.()
@@ -83,7 +88,7 @@ export function Typewriter(props: ThreeElements['group']) {
   // another, an out can land after an over, and move corrects that.
   const showCursor = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (!keyNameOf(e.object)) return
+      if (!pressableOf(e.object)) return
       e.stopPropagation()
       setCursor('pointer')
     },
@@ -92,7 +97,7 @@ export function Typewriter(props: ThreeElements['group']) {
 
   const onPointerOut = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (keyNameOf(e.object)) setCursor('')
+      if (pressableOf(e.object)) setCursor('')
     },
     [setCursor],
   )

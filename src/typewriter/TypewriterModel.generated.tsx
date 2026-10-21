@@ -12,6 +12,8 @@ type GLTFResult = GLTF & {
   nodes: {
     Knob_L: THREE.Mesh
     Knob_R: THREE.Mesh
+    Lever_1: THREE.Mesh
+    Lever_2: THREE.Mesh
     Paper: THREE.Mesh
     PaperHolder: THREE.Mesh
     Platen: THREE.Mesh
@@ -100,16 +102,14 @@ type GLTFResult = GLTF & {
     Key_Y_2: THREE.Mesh
     Key_Z_1: THREE.Mesh
     Key_Z_2: THREE.Mesh
-    Lever_1: THREE.Mesh
-    Lever_2: THREE.Mesh
     TypebarBasket: THREE.Mesh
   }
   materials: {
     Mat_Body: THREE.MeshStandardMaterial
-    Mat_Paper: THREE.MeshStandardMaterial
     Mat_Metal: THREE.MeshStandardMaterial
-    Mat_Platen: THREE.MeshStandardMaterial
     Mat_Wood: THREE.MeshStandardMaterial
+    Mat_Paper: THREE.MeshStandardMaterial
+    Mat_Platen: THREE.MeshStandardMaterial
     Mat_KeyCream: THREE.MeshStandardMaterial
     Mat_KeyDark: THREE.MeshStandardMaterial
   }
@@ -124,6 +124,10 @@ export function Model(props: ThreeElements['group']) {
         <group name="Carriage" position={[0.085, 0.125, -0.045]}>
           <mesh name="Knob_L" geometry={nodes.Knob_L.geometry} material={materials.Mat_Body} position={[-0.146, 0, 0]} />
           <mesh name="Knob_R" geometry={nodes.Knob_R.geometry} material={materials.Mat_Body} position={[0.146, 0, 0]} />
+          <group name="Lever" position={[-0.125, 0.028, 0]}>
+            <mesh name="Lever_1" geometry={nodes.Lever_1.geometry} material={materials.Mat_Metal} />
+            <mesh name="Lever_2" geometry={nodes.Lever_2.geometry} material={materials.Mat_Wood} />
+          </group>
           <mesh name="Paper" geometry={nodes.Paper.geometry} material={materials.Mat_Paper} position={[0, 0.12, 0.006]} />
           <mesh name="PaperHolder" geometry={nodes.PaperHolder.geometry} material={materials.Mat_Metal} />
           <mesh name="Platen" geometry={nodes.Platen.geometry} material={materials.Mat_Platen} />
@@ -292,10 +296,6 @@ export function Model(props: ThreeElements['group']) {
         <group name="Key_Z" position={[-0.082, 0.049, 0.113]}>
           <mesh name="Key_Z_1" geometry={nodes.Key_Z_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Z_2" geometry={nodes.Key_Z_2.geometry} material={materials.Mat_KeyDark} />
-        </group>
-        <group name="Lever" position={[-0.04, 0.153, -0.045]}>
-          <mesh name="Lever_1" geometry={nodes.Lever_1.geometry} material={materials.Mat_Metal} />
-          <mesh name="Lever_2" geometry={nodes.Lever_2.geometry} material={materials.Mat_Wood} />
         </group>
         <mesh name="TypebarBasket" geometry={nodes.TypebarBasket.geometry} material={materials.Mat_Metal} position={[0, 0.07, 0.002]} />
       </group>

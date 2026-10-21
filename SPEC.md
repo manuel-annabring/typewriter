@@ -64,7 +64,7 @@ What NOT to trust:
 - **Typewriter sound**: key clack, spacebar, bell, carriage return, lever. Audio starts only after the first user interaction (browser autoplay rules). Source and license TBD.
 - **Intro camera animation**: camera moves in to the typewriter on load.
 - **Paper feed and new sheet**: pull the finished page out and insert a fresh one.
-- **Whole sheet visible, wrapped around the platen**: the full page stays in view the whole time and curves around the platen, instead of being clipped below the strike point (the slice 5 stopgap, a clipping plane on `Mat_Paper`). Likely needs the `Paper` mesh to bend (subdivided plane bent in code or a vertex shader) and so a contract change for `Paper` (section 5): propose it before starting.
+- **Whole sheet visible, wrapped around the platen**: the full page stays in view the whole time and curves around the platen, instead of being clipped below the strike point (the slice 5 stopgap, a clipping plane on `Mat_Paper`). The `Paper` mesh is already subdivided for this (section 5, slice 5b); the bend is a vertex shader on `Mat_Paper` with the line feed as a uniform, and needs no further contract change.
 - **Save or share**: download the page as an image and copy the text to the clipboard.
 - **Mobile support** (stretch): tap keys with comfortable touch targets, camera framing for portrait screens. Desktop comes first.
 
@@ -87,9 +87,9 @@ The code finds and animates parts by name, so the names and rules below are fixe
 | `Key_A` to `Key_Z`, `Key_0` to `Key_9` | One object per key, origin at the key's center |
 | `Key_Space`, `Key_Tab`, `Key_Enter`, `Key_Backspace`, `Key_Shift_L`, `Key_Shift_R` | Special keys (final list confirmed once the layout is drawn) |
 | `Key_<name>` for punctuation | e.g. `Key_Comma`, `Key_Period` |
-| `Carriage` | Parent group of everything that slides: `Platen`, `Knob_L`, `Knob_R`, `PaperHolder` |
-| `Lever` | Origin at its hinge, so it rotates correctly |
-| `Paper` | Plane with UVs filling 0 to 1, page ratio A4 (decided) |
+| `Carriage` | Parent group of everything that slides: `Platen`, `Knob_L`, `Knob_R`, `PaperHolder`, `Paper`, `Lever` |
+| `Lever` | Child of `Carriage` (it slides with it). Origin at its hinge, so it rotates correctly |
+| `Paper` | Child of `Carriage`. Flat plane with UVs filling 0 to 1, page ratio A4 (decided), subdivided along its height (128 segments) so code can bend it around the platen |
 | `StrikePoint` | Empty marking where characters land, fixed relative to `Body` |
 | `TypebarBasket` | Simplified, static |
 
@@ -102,12 +102,14 @@ The code finds and animates parts by name, so the names and rules below are fixe
 - Proposed budgets (confirm after the first export): GLB under about 5 MB, triangle count under about 100k.
 - Before each export, run a contract check (names present, transforms applied, origins sensible).
 
-### Proposed amendments (not in force until slice 5b lands)
+### Paper path (spike result, slice 5b)
 
-Both come out of slice 5 and are applied in the blockout before the slice 6 detail pass, so slice 6 is built against the final contract.
+The bend itself is Phase 2 ("Whole sheet visible, wrapped around the platen"), but a throwaway spike (vertex shader on `Mat_Paper`, branch `spike/paper-bend`, not merged) settled the open contract question: **no guide node is needed.** The wrap is derived from the model alone:
 
-1. **`Lever` becomes a child of `Carriage`.** It slides with the carriage, so by the rule above it belongs in that group. This replaces the approved interpretation "Lever is top-level". Origin stays at the hinge. Slice 5 slides it from code (`useCarriageAnimation`) as a stopgap; that code is deleted in the same change that reparents it, or the lever would move twice.
-2. **`Paper` is subdivided along its height.** Still a flat plane in the file, UVs still 0 to 1, still A4, still a child of `Carriage`, but with enough segments along its height (about 64, to be confirmed) for code to bend it around the platen. The bend itself (a vertex shader on `Mat_Paper`, with the line feed as a uniform) is a Phase 2 feature, see "Whole sheet visible, wrapped around the platen". Open: whether the sheet's path needs a guide node, or can be derived from the platen radius. A short spike of the bend on the blockout answers this before the contract is frozen.
+- The platen axis is the `Carriage` origin (already enforced by the contract check) and runs along x.
+- The wrap radius is the distance from that axis to the sheet's plane (22.6 mm here, against a 22 mm platen), so the sheet leaves the platen tangent to it with no kink.
+- The sheet stays flat above the tangent point, wraps around the platen below it, and what the wrap leaves over (a straight tail) is a code-side choice, not a contract item.
+- 64 segments showed visible facets on the 22 mm radius (about 12 degrees each); 128 is the contract value. Two vertex columns are enough because the bend only runs along the height.
 
 ## 6. Architecture notes
 
@@ -127,7 +129,7 @@ Each step ends with something visible, is tested, and is committed before the ne
 3. Key press animation.
 4. Paper canvas texture: characters appear at the cursor.
 5. Carriage slide, line-end lock, lever return and line feed.
-5b. Contract amendments (section 5, proposed amendments): reparent `Lever` under `Carriage` and subdivide `Paper` in the blockout `.blend`; update `contract_spec.py`, `contract.ts` and the contract check; export and `npm run gen:model`; remove the lever sliding from `useCarriageAnimation`. Optional first: a short throwaway spike of the paper bend to settle the guide-node question. Mechanical Blender work, so Sonnet at medium effort; Opus or high effort for the spike.
+5b. Contract amendments (done): reparent `Lever` under `Carriage` and subdivide `Paper` in the blockout `.blend`; update `contract_spec.py`, `contract.ts` and the contract check; export and `npm run gen:model`; remove the lever sliding from `useCarriageAnimation`. Optional first: a short throwaway spike of the paper bend to settle the guide-node question. Mechanical Blender work, so Sonnet at medium effort; Opus or high effort for the spike.
 6. Model detail pass: replace the blockout, materials, optimization. The contract stays the same.
 7. Phase 2 slices, one at a time: sound, intro camera, new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.

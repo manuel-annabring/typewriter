@@ -5,8 +5,9 @@
 
 Default output: tools/blender/typewriter-blockout.blend
 
-This is a one-time seed. Once the .blend is hand-edited, the .blend is the source of
-truth: re-running this script overwrites those edits.
+Until the .blend is hand-edited (slice 6), this script is the source of the .blend and
+contract changes go here, then re-run. Once the .blend is hand-edited, the .blend is the
+source of truth: re-running this script overwrites those edits.
 
 Blender is Z up. Modeling convention here: X right, Y depth (keyboard at -Y, platen at
 +Y), Z up. The glTF exporter converts this to +Y up, front facing +Z. Units are meters.
@@ -295,17 +296,28 @@ def build_carriage(mats):
         (Vector((cx + half_w, tl_pt.y, tl_pt.z)), (1, 1)),
         (Vector((cx - half_w, tl_pt.y, tl_pt.z)), (0, 1)),
     ]
-    verts = [bm.verts.new(p) for p, _ in corners]
-    face = bm.faces.new(verts)
+    # Subdivided along its height so code can bend it around the platen (SPEC section 5).
+    # Still flat; two columns are enough because the bend only runs along the height.
+    rows = spec.PAPER_HEIGHT_SEGMENTS
+    (bl, _), (br, _), (_, _), (tl, _) = corners
+    along = tl - bl
+    grid = [
+        [bm.verts.new(bl + along * (j / rows)), bm.verts.new(br + along * (j / rows))] for j in range(rows + 1)
+    ]
     uv_layer = bm.loops.layers.uv.new("UVMap")
-    for loop, (_, uv) in zip(face.loops, corners):
-        loop[uv_layer].uv = uv
+    for j in range(rows):
+        face = bm.faces.new((grid[j][0], grid[j][1], grid[j + 1][1], grid[j + 1][0]))
+        for loop in face.loops:
+            u = 0.0 if loop.vert in (grid[j][0], grid[j + 1][0]) else 1.0
+            v = j / rows if loop.vert in (grid[j][0], grid[j][1]) else (j + 1) / rows
+            loop[uv_layer].uv = (u, v)
     make_object("Paper", bm, [mats["Mat_Paper"]], parent=carriage)
     return carriage
 
 
 def build_lever(mats):
-    """Hinge at the top of the carriage's left end. Arm points left and up."""
+    """Hinge at the top of the carriage's left end. Arm points left and up. Parented to
+    the Carriage by the caller."""
     hinge = Vector((CARRIAGE_REST_X - PLATEN_LEN / 2 + 0.010, PLATEN_Y, PLATEN_Z + 0.028))
     bm = bmesh.new()
     add_cylinder(bm, (0, 0, 0), 0.004, 0.010, axis="Y", segments=12, mat=0)
@@ -329,9 +341,10 @@ def main():
     body = build_body(mats)
     build_typebar_basket(mats)
     build_keys(mats)
-    build_carriage(mats)
+    carriage = build_carriage(mats)
     lever, hinge = build_lever(mats)
     lever.location = hinge
+    set_parent(lever, carriage)  # the lever slides with the carriage
     make_empty("StrikePoint", STRIKE, display="SPHERE", size=0.004, parent=body)
 
     bpy.ops.wm.save_as_mainfile(filepath=out, compress=True)

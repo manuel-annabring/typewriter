@@ -1,6 +1,7 @@
 import type { Object3D } from 'three'
 
 // Node names from SPEC.md section 5. Keep in sync with tools/blender/contract_spec.py.
+// Lever and Paper are children of Carriage (they slide with it); the guard looks nodes up by name.
 const KEY_ROWS = [
   ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'Backspace'],
   ['Tab', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],

@@ -76,7 +76,7 @@ def run_check():
     for name, o in objs.items():
         if name.startswith("Key_") and o.parent is carriage and carriage is not None:
             errors.append(f"{name} must not be under Carriage")
-    for name in ("Lever", "Body", "Base"):
+    for name in ("Body", "Base"):
         o = objs.get(name)
         if o is not None and o.parent is carriage and carriage is not None:
             errors.append(f"{name} must not be under Carriage")
@@ -157,6 +157,18 @@ def run_check():
                             f"Paper is {w*1000:.0f} x {h*1000:.0f} mm, expected "
                             f"{spec.PAPER_WIDTH*1000:.0f} x {spec.PAPER_HEIGHT*1000:.0f} mm (A4)"
                         )
+
+                    # Subdivided along its height (so code can bend it) but still flat.
+                    segments = len({round(uv.y, 4) for uv in uvs}) - 1
+                    if segments < spec.PAPER_HEIGHT_SEGMENTS:
+                        errors.append(
+                            f"Paper has {segments} segments along its height, "
+                            f"expected at least {spec.PAPER_HEIGHT_SEGMENTS}"
+                        )
+                    normal = (c10 - c00).cross(c01 - c00).normalized()
+                    off = max(abs((paper.matrix_world @ v.co - c00).dot(normal)) for v in paper.data.vertices)
+                    if off > 0.0005:
+                        errors.append(f"Paper must be flat (a vertex is {off*1000:.2f} mm off the plane)")
 
     # 7. Budget and leftover modifiers.
     tris = 0

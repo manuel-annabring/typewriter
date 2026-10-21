@@ -18,7 +18,7 @@ DARK_KEYS = {"Tab", "Enter", "Backspace", "Shift_L", "Shift_R"}
 
 KEY_NAMES = [f"Key_{n}" for row in KEY_ROWS for n in row] + [f"Key_{SPACE_KEY}"]
 
-CARRIAGE_CHILDREN = ["Platen", "Knob_L", "Knob_R", "PaperHolder", "Paper"]
+CARRIAGE_CHILDREN = ["Platen", "Knob_L", "Knob_R", "PaperHolder", "Paper", "Lever"]
 
 REQUIRED_NAMES = (
     ["Body", "Base", "Carriage", "Lever", "Paper", "StrikePoint", "TypebarBasket"]
@@ -39,6 +39,9 @@ MATERIALS = [
 # A4 in meters
 PAPER_WIDTH = 0.210
 PAPER_HEIGHT = 0.297
+# Paper is subdivided along its height so code can bend it around the platen. The bend
+# spike (22 mm platen radius, about 12 degrees per facet at 64) showed visible facets, so 128.
+PAPER_HEIGHT_SEGMENTS = 128
 
 TRIANGLE_BUDGET = 100_000
 

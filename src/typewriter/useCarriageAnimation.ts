@@ -15,9 +15,7 @@ const CLIP_BELOW_STRIKE = 0.008
 interface CarriageRig {
   carriage: Object3D
   paper: Object3D
-  lever: Object3D
   restX: number
-  leverRestX: number
   paperRest: Vector3
   /** Unit vector along the sheet, bottom edge to top edge, in Carriage space. */
   up: Vector3
@@ -30,7 +28,9 @@ interface CarriageRig {
 /**
  * Measures the sheet from its mesh: the up axis (bottom edge to top edge), its height
  * and the centre, in the paper node's own space. The model bakes the 8 degree lean
- * into the vertices, so this reads it instead of assuming it.
+ * into the vertices, so this reads it instead of assuming it. Only the two edge rows
+ * count: the sheet is subdivided along its height, so averaging "the top half" would
+ * read half the height.
  */
 function measureSheet(geometry: BufferGeometry): { up: Vector3; height: number; centre: Vector3 } {
   const pos = geometry.getAttribute('position')
@@ -45,15 +45,15 @@ function measureSheet(geometry: BufferGeometry): { up: Vector3; height: number; 
   const centre = new Vector3()
   let nTop = 0
   let nBottom = 0
-  const edge = (maxY - minY) / 2
+  const edge = 1e-6
   const v = new Vector3()
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i)
     centre.add(v)
-    if (v.y > minY + edge) {
+    if (v.y > maxY - edge) {
       top.add(v)
       nTop++
-    } else {
+    } else if (v.y < minY + edge) {
       bottom.add(v)
       nBottom++
     }
@@ -67,9 +67,8 @@ function measureSheet(geometry: BufferGeometry): { up: Vector3; height: number; 
 }
 
 /**
- * Carriage slide and line feed. The Lever is a top-level node in the model (contract),
- * but it is mounted on the carriage's left end, so it is slid by the same amount here.
- * Both targets are derived from the store cursor each
+ * Carriage slide and line feed. The Lever, Paper and Platen are children of Carriage, so
+ * moving the carriage moves them. Both targets are derived from the store cursor each
  * frame: the carriage slides left one pitch per column, and the sheet feeds up its own
  * (tilted) axis so the active row's baseline sits at the strike point. Nothing is
  * stored: a character, a return, or a backspace only moves the target.
@@ -89,7 +88,6 @@ export function useCarriageAnimation(root: RefObject<Object3D | null>): void {
     const carriage = find('Carriage')
     const paper = find('Paper') as Mesh
     const strike = find('StrikePoint')
-    const lever = find('Lever')
 
     scene.updateWorldMatrix(true, true)
     const sheet = measureSheet(paper.geometry)
@@ -104,9 +102,7 @@ export function useCarriageAnimation(root: RefObject<Object3D | null>): void {
     const r: CarriageRig = {
       carriage,
       paper,
-      lever,
       restX,
-      leverRestX: lever.position.x,
       paperRest,
       up: sheet.up,
       strikeAlong,
@@ -115,7 +111,6 @@ export function useCarriageAnimation(root: RefObject<Object3D | null>): void {
       feed: paperFeedM(cursor.row, strikeAlong, sheet.height),
     }
     carriage.position.x = r.x
-    lever.position.x = r.leverRestX + (r.x - restX)
     paper.position.copy(paperRest).addScaledVector(r.up, r.feed)
     rig.current = r
 
@@ -138,7 +133,6 @@ export function useCarriageAnimation(root: RefObject<Object3D | null>): void {
       material.clippingPlanes = previousClipping
       material.needsUpdate = true
       carriage.position.x = restX
-      lever.position.x = r.leverRestX
       paper.position.copy(paperRest)
       rig.current = null
     }
@@ -155,7 +149,6 @@ export function useCarriageAnimation(root: RefObject<Object3D | null>): void {
       if (Math.abs(next - targetX) < SETTLE_EPSILON) next = targetX
       r.x = next
       r.carriage.position.x = next
-      r.lever.position.x = r.leverRestX + (next - r.restX)
     }
 
     const targetFeed = paperFeedM(cursor.row, r.strikeAlong, r.paperHeight)

@@ -33,3 +33,6 @@ __pycache__/
 
 # Claude Code local config
 .claude/
+
+# Local MCP server config (absolute paths on this machine)
+.mcp.json

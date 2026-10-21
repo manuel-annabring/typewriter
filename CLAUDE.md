@@ -13,6 +13,8 @@ Interactive 3D typewriter for the web. The visitor types (physical keyboard or c
 - Manuel is a senior React developer but new to three.js, r3f and Blender. Don't explain React basics. Do explain three.js, r3f, shader or Blender concepts in 2 to 3 sentences the first time they appear.
 - Never change the model contract (SPEC.md section 5) on your own.
 - Don't add dependencies without asking.
+- Before committing, show the diff summary and `git status`, then wait for Manuel's OK; then commit and push.
+- If you said you would ask before a deviation, ask. Flag any deviation prominently in the reply.
 
 ## Model and effort
 
@@ -128,5 +130,9 @@ tools/gen-model.mjs gltfjsx wrapper behind `npm run gen:model`
 - If another dev server holds port 5173, `preview_start` falls back to 5174. Use whatever port it reports.
 - The dev-only contract guard throws if a node is missing, which unmounts the Canvas and leaves the loader overlay on screen. The error is in the console.
 - Slice 5 stopgap: `Mat_Paper` has a clipping plane 8 mm below the strike point (set in `useCarriageAnimation`), because the flat sheet would otherwise hang out of the machine. It is temporary; the planned replacement (whole sheet visible, wrapped around the platen) is listed in SPEC section 4, Phase 2.
-- The carriage hook also slides the `Lever` (top-level in the contract) by the carriage's offset from rest, so the lever stays at the carriage's left end.
+- `useCarriageAnimation` also slides the top-level `Lever` by the carriage's offset from rest. Stopgap: slice 5b reparents `Lever` under `Carriage` (SPEC section 5, proposed amendments) and that code must be deleted in the same change, or the lever moves twice.
+- Carriage and paper (slice 5): position and line feed are derived from `cursor` each frame (nothing stored). Rest x, the sheet's up axis and height, and the strike point's offset along the sheet are measured from the loaded nodes at mount, never hard-coded. glTF frame: the sheet's up axis is (0, cos 8°, -sin 8°), not the Blender-frame (0, sin 8°, cos 8°). `StrikePoint` sits near the sheet's bottom (about 22 mm above the bottom edge), not its middle, so row 0 at the strike means feeding the sheet down about 245 mm. The carriage target is `restX - (col + 0.5) * 2.54 mm` (half cell centres the glyph under the strike).
+- Store behavior: bell fires once when the cursor reaches `BELL_COL` (60) via `bellSeq`; lock at col 66; Backspace moves one column back without erasing and clears the lock; Enter on the last row returns the carriage without a feed (typing overstrikes). The 3D lever is the pseudo-key name `'Lever'` in `pressedKeys`; `pressKey('Lever')` runs `returnCarriage` like Enter.
+- ESLint `react-hooks/immutability` rejects mutating a value returned by a hook (e.g. `useThree(s => s.gl)`). Read it with `useThree(s => s.get)` and call `get()` inside the effect.
+- Browser pane testing: the `computer` `type` action fires no keydown events; use `key` (e.g. "h e l l o"). Synthetic `KeyboardEvent`s on window need `key` and `code`; to hold a key, dispatch keydown and keyup separately. The pane lags a frame or two behind state, and `read_console_messages` is cumulative across reloads, so reload before judging errors (stale hot-reload errors linger). Synthetic pointer events can move OrbitControls; use real clicks.
 - Metal materials render black until an environment map exists (slice 6 / scene polish). Not a bug.

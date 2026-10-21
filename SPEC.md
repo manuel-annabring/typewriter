@@ -111,7 +111,7 @@ Both come out of slice 5 and are applied in the blockout before the slice 6 deta
 
 ## 6. Architecture notes
 
-- The Zustand store holds: the lines of text, cursor (row and column), carriage offset, status (typing or locked at margin), currently pressed keys.
+- The Zustand store holds: the lines of text, cursor (row and column), status (typing or locked at margin), a bell counter (`bellSeq`), currently pressed keys. The carriage position and the line feed are not stored: they are derived from the cursor each frame.
 - Actions: `typeChar`, `space`, `returnCarriage`, `backspace`, `newSheet`. Input only dispatches actions. Scene components subscribe.
 - Animations run in `useFrame` using refs and damping. No React state updates per frame and no creating new objects inside `useFrame`.
 - Paper uses a `CanvasTexture`: draw the one new glyph, set `needsUpdate`.
@@ -148,7 +148,7 @@ Each step ends with something visible, is tested, and is committed before the ne
 
 ## 10. Open questions
 
-- Backspace: move the carriage back one step without erasing (authentic) or something else?
+- ~~Backspace~~ Decided in slice 5: moves the carriage back one column without erasing, clears the margin lock, and typing over it overstrikes. Tab is still open (next 5-column stop is the proposal).
 - Tab key and Shift: does shift change the printed character, and what do the key caps show?
 - Lines and characters per page (the paper format is decided: A4).
 - Camera: orbit limits, or a fixed view?

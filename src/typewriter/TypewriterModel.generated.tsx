@@ -133,8 +133,8 @@ export function Model(props: ThreeElements['group']) {
           <mesh name="Platen" geometry={nodes.Platen.geometry} material={materials.Mat_Platen} />
         </group>
         <mesh name="Base" geometry={nodes.Base.geometry} material={materials.Mat_Wood} />
-        <mesh name="Body" geometry={nodes.Body.geometry} material={materials.Mat_Body} position={[0, 0.001, 0]}>
-          <group name="StrikePoint" position={[0, 0.087, -0.041]} />
+        <mesh name="Body" geometry={nodes.Body.geometry} material={materials.Mat_Body}>
+          <group name="StrikePoint" position={[0, 0.088, -0.041]} />
         </mesh>
         <group name="Key_0" position={[0.089, 0.048, 0.06]}>
           <mesh name="Key_0_1" geometry={nodes.Key_0_1.geometry} material={materials.Mat_KeyCream} />

@@ -1,4 +1,4 @@
-import { ContactShadows, Environment, Lightformer, OrbitControls } from '@react-three/drei'
+import { ContactShadows, Environment, Lightformer, OrbitControls, StatsGl } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Suspense } from 'react'
 import { Typewriter } from '../typewriter/Typewriter.tsx'
@@ -23,6 +23,11 @@ const PANELS: Panel[] = [
   { name: 'floor', form: 'rect', intensity: 0.5, color: '#e8d9c0', position: [0, -2, 0], scale: [8, 8, 1], rotation: [-Math.PI / 2, 0, 0] },
   { name: 'ring', form: 'ring', intensity: 1, position: [0, 0.5, -4], scale: 4, rotation: [0, 0, 0] },
 ]
+
+// Dev only: FPS, frame time and GPU time (stats-gl) in the top-right corner. `?noshadow` leaves
+// ContactShadows out so its cost can be compared without editing code.
+const SHOW_STATS = import.meta.env.DEV
+const SHADOWS = !(import.meta.env.DEV && new URLSearchParams(window.location.search).has('noshadow'))
 
 // <Canvas> creates the WebGL renderer, a three.js Scene and a default camera,
 // and runs the render loop. Everything inside it is a three.js object written
@@ -63,15 +68,18 @@ export default function Scene() {
           flat background colour shows through. No shadow map or light needed. It re-renders
           every frame so the sliding carriage and pressed keys move the shadow too; the
           resolution is low because the blur hides the detail. */}
-      <ContactShadows
-        position={[0, 0, 0]}
-        scale={1}
-        far={0.25}
-        resolution={512}
-        blur={2.5}
-        opacity={1.2}
-        color="#2b2118"
-      />
+      {SHADOWS && (
+        <ContactShadows
+          position={[0, 0, 0]}
+          scale={1}
+          far={0.25}
+          resolution={512}
+          blur={2.5}
+          opacity={1.2}
+          color="#2b2118"
+        />
+      )}
+      {SHOW_STATS && <StatsGl className="dev-stats" />}
       {/* OrbitControls (from drei) lets you drag to rotate, scroll to zoom and
           right-drag to pan the camera around a target point. */}
       <OrbitControls makeDefault target={[0.05, 0.12, 0]} />

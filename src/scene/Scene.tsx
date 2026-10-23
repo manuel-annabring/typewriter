@@ -1,4 +1,4 @@
-import { Environment, Lightformer, OrbitControls } from '@react-three/drei'
+import { ContactShadows, Environment, Lightformer, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Suspense } from 'react'
 import { Typewriter } from '../typewriter/Typewriter.tsx'
@@ -58,6 +58,20 @@ export default function Scene() {
       <Suspense fallback={null}>
         <Typewriter />
       </Suspense>
+      {/* Ground shadow: ContactShadows renders the scene's depth from below the floor into a
+          blurred, transparent texture on a plane at y = 0 (the machine sits on it), so the
+          flat background colour shows through. No shadow map or light needed. It re-renders
+          every frame so the sliding carriage and pressed keys move the shadow too; the
+          resolution is low because the blur hides the detail. */}
+      <ContactShadows
+        position={[0, 0, 0]}
+        scale={1}
+        far={0.25}
+        resolution={512}
+        blur={2.5}
+        opacity={1.2}
+        color="#2b2118"
+      />
       {/* OrbitControls (from drei) lets you drag to rotate, scroll to zoom and
           right-drag to pan the camera around a target point. */}
       <OrbitControls makeDefault target={[0.05, 0.12, 0]} />

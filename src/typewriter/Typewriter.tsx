@@ -8,6 +8,7 @@ import { useCarriageAnimation } from './useCarriageAnimation.ts'
 import { useKeyLabels } from './useKeyLabels.ts'
 import { useKeyPressAnimation } from './useKeyPressAnimation.ts'
 import { useLeverAnimation } from './useLeverAnimation.ts'
+import { usePaperBend } from './usePaperBend.ts'
 import { usePaperTexture } from './usePaperTexture.ts'
 
 // The 3D keys and the carriage return lever are what the pointer can press.
@@ -34,6 +35,7 @@ export function Typewriter(props: ThreeElements['group']) {
   usePaperTexture(root)
   useKeyLabels(root)
   useCarriageAnimation(root)
+  usePaperBend(root)
   useLeverAnimation(root)
 
   const get = useThree((state) => state.get)

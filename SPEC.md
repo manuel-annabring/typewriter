@@ -102,6 +102,19 @@ The code finds and animates parts by name, so the names and rules below are fixe
 - Proposed budgets (confirm after the first export): GLB under about 5 MB, triangle count under about 100k.
 - Before each export, run a contract check (names present, transforms applied, origins sensible).
 
+### Key label atlas (amendment, slice 6d)
+
+Key labels are drawn in code, not baked into the model. All keys share `Mat_KeyCream` and `Mat_KeyDark`, so each of the two materials gets one canvas atlas (an 8 x 8 grid of square cells; the code paints the label cells and assigns the atlases as `map`). The model only has to say where each key's label lives:
+
+- Every key object has one UV layer (`UVMap`).
+- A key's cell is its index in the key list (`KEY_NODE_NAMES` in `contract.ts`, `KEY_NAMES` in `contract_spec.py`: rows back to front, then `Key_Space`) plus 1. Cell 0 is the blank cell (plain background, no label). Cells run left to right, then top to bottom, in the glTF UV frame (v down, origin top-left).
+- The key's top face (the face with the label, in `Mat_KeyCream` for cream keys and `Mat_KeyDark` for the modifier keys) maps into its cell, inside a margin of 1/16 of the cell on every side. The top is projected straight down, so the cap's full width fills the inner square.
+- Every other face (cap sides, stem, and a cream key's dark parts) maps into the blank cell, so they show the plain base colour.
+- The code reads each material's base colour from the model, paints it as the atlas background and sets the material colour to white, so Blender stays the source of truth for the colours. `Key_Space` is blank (its cell stays unlabelled). Labels: letters in uppercase, digits, `,` and `.` as printed, `TAB`, `↵` (Enter), `⇧` (both Shift keys), `←` (Backspace).
+- Font: Inter (sans-serif, open license), bundled in `public/fonts/`.
+
+The contract check verifies the UVs (layer present, top face inside its inner cell, all other faces in the blank cell) once the journal script that creates them exists (slice 6d-2).
+
 ### Paper path (spike result, slice 5b)
 
 The bend itself is Phase 2 ("Whole sheet visible, wrapped around the platen"), but a throwaway spike (vertex shader on `Mat_Paper`, branch `spike/paper-bend`, not merged) settled the open contract question: **no guide node is needed.** The wrap is derived from the model alone:

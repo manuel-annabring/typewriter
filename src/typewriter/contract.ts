@@ -13,6 +13,19 @@ export const KEY_NODE_NAMES: readonly string[] = [...KEY_ROWS.flat(), 'Space'].m
   (n) => `Key_${n}`,
 )
 
+/** Keys drawn dark (modifiers); their top faces use Mat_KeyDark, all other caps Mat_KeyCream. */
+export const DARK_KEY_NODE_NAMES: ReadonlySet<string> = new Set(
+  ['Tab', 'Enter', 'Backspace', 'Shift_L', 'Shift_R'].map((n) => `Key_${n}`),
+)
+
+// Key label atlas layout (SPEC.md section 5). Keep in sync with tools/blender/contract_spec.py.
+// A key's cell is its index in KEY_NODE_NAMES plus 1; cell 0 is the blank cell.
+export const ATLAS_COLS = 8
+export const ATLAS_ROWS = 8
+export const ATLAS_BLANK_CELL = 0
+/** Inner margin of a cell as a fraction of its size; the top face's UVs stay inside it. */
+export const ATLAS_CELL_MARGIN = 1 / 16
+
 export const REQUIRED_NODE_NAMES: readonly string[] = [
   'Body',
   'Base',

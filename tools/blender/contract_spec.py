@@ -18,7 +18,34 @@ DARK_KEYS = {"Tab", "Enter", "Backspace", "Shift_L", "Shift_R"}
 
 KEY_NAMES = [f"Key_{n}" for row in KEY_ROWS for n in row] + [f"Key_{SPACE_KEY}"]
 
-CARRIAGE_CHILDREN = ["Platen", "Knob_L", "Knob_R", "PaperHolder", "Paper", "Lever"]
+# Key label atlas layout (SPEC.md section 5). Keep in sync with src/typewriter/contract.ts.
+# A key's cell is its index in KEY_NAMES plus 1; cell 0 is the blank cell. UV frame is glTF's
+# (v down, origin top-left); Blender's v is 1 - v_gltf, the exporter flips it back.
+ATLAS_COLS = 8
+ATLAS_ROWS = 8
+ATLAS_BLANK_CELL = 0
+# Inner margin of a cell as a fraction of its size; the top face's UVs stay inside it.
+ATLAS_CELL_MARGIN = 1 / 16
+
+
+def key_atlas_cell(name):
+    """Atlas cell of a key object, or None if the name is not a key."""
+    return KEY_NAMES.index(name) + 1 if name in KEY_NAMES else None
+
+
+def cell_rect_gltf(cell, inner=False):
+    """(u0, v0, u1, v1) of a cell in glTF UV space (v down)."""
+    col, row = cell % ATLAS_COLS, cell // ATLAS_COLS
+    m = ATLAS_CELL_MARGIN if inner else 0
+    return (
+        (col + m) / ATLAS_COLS,
+        (row + m) / ATLAS_ROWS,
+        (col + 1 - m) / ATLAS_COLS,
+        (row + 1 - m) / ATLAS_ROWS,
+    )
+
+
+CARRIAGE_CHILDREN =["Platen", "Knob_L", "Knob_R", "PaperHolder", "Paper", "Lever"]
 
 REQUIRED_NAMES = (
     ["Body", "Base", "Carriage", "Lever", "Paper", "StrikePoint", "TypebarBasket"]

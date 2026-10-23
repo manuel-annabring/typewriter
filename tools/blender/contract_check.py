@@ -25,6 +25,8 @@ PIVOT_TOL = 0.006  # lever hinge vs. nearest vertex, carriage vs. platen center
 ROUND_TOL = 0.001  # platen y and z extents may differ by 1 mm (polygonal cylinder)
 TANGENT_TOL = 0.002  # sheet plane vs. platen surface (SPEC: 22.6 mm plane, 22 mm radius)
 AXIS_TOL = 1e-4  # 1 - cos of the allowed angle between the sheet's width and the x axis
+UV_TOL = 1e-5  # key atlas UVs may overshoot their cell box by this much (float noise)
+UV_UP_NORMAL_Z = 0.9  # a key polygon counts as "facing up" above this normal.z
 
 
 def _local_bbox(obj):
@@ -201,6 +203,40 @@ def run_check():
                                 f"Paper plane is {gap*1000:.1f} mm from the platen axis, platen radius is "
                                 f"{platen_radius*1000:.1f} mm (must be tangent within {TANGENT_TOL*1000:.0f} mm)"
                             )
+
+    # 6b. Key label atlas (SPEC section 5): every key has a UV layer, its top face lies inside its
+    # atlas cell (inner margin), every other face sits in the blank cell. Blender v = 1 - glTF v.
+    for name in spec.KEY_NAMES:
+        o = objs.get(name)
+        if o is None or o.type != "MESH":
+            continue
+        mesh = o.data
+        layer = mesh.uv_layers.active
+        if layer is None or len(mesh.uv_layers) != 1:
+            errors.append(f"{name}: needs exactly one UV layer (key label atlas, run steps/02_key_uvs.py)")
+            continue
+        ups = [p for p in mesh.polygons if p.normal.z > UV_UP_NORMAL_Z]
+        if not ups:
+            errors.append(f"{name}: has no upward-facing top face for the label")
+            continue
+        top = max(ups, key=lambda p: p.center.z)
+        cell = spec.key_atlas_cell(name)
+        in_box = spec.cell_rect_gltf(cell, inner=True)
+        blank_box = spec.cell_rect_gltf(spec.ATLAS_BLANK_CELL)
+        bad_top = bad_other = 0
+        for poly in mesh.polygons:
+            box = in_box if poly.index == top.index else blank_box
+            for li in poly.loop_indices:
+                u, v = layer.data[li].uv.x, 1.0 - layer.data[li].uv.y
+                if not (box[0] - UV_TOL <= u <= box[2] + UV_TOL and box[1] - UV_TOL <= v <= box[3] + UV_TOL):
+                    if poly.index == top.index:
+                        bad_top += 1
+                    else:
+                        bad_other += 1
+        if bad_top:
+            errors.append(f"{name}: {bad_top} top-face UV(s) outside atlas cell {cell}")
+        if bad_other:
+            errors.append(f"{name}: {bad_other} UV(s) outside the blank atlas cell (non-top faces)")
 
     # 7. Budget and leftover modifiers.
     tris = 0

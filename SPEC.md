@@ -144,6 +144,9 @@ Each step ends with something visible, is tested, and is committed before the ne
 5. Carriage slide, line-end lock, lever return and line feed.
 5b. Contract amendments (done): reparent `Lever` under `Carriage` and subdivide `Paper` in the blockout `.blend`; update `contract_spec.py`, `contract.ts` and the contract check; export and `npm run gen:model`; remove the lever sliding from `useCarriageAnimation`. Optional first: a short throwaway spike of the paper bend to settle the guide-node question. Mechanical Blender work, so Sonnet at medium effort; Opus or high effort for the spike.
 6. Model detail pass: replace the blockout, materials, optimization. The contract stays the same.
+   - Done: `Base`, `Body` (hand-modeled), key labels (6d: atlas UVs and `useKeyLabels`), environment light.
+   - To do (still blockouts in `typewriter.blend`): the 44 keycaps (72-vertex blockouts, rounded caps with stems; re-run `steps/02_key_uvs.py` last after reshaping), `Platen`, `Knob_L` / `Knob_R`, `PaperHolder`, `Lever`, `TypebarBasket`. `Paper`, `Carriage` and `StrikePoint` are contract-critical and stay as they are.
+   - To do (polish): ground shadow, material tuning (roughness and metalness per `Mat_*`), optimization pass against the budgets in section 5.
 7. Phase 2 slices, one at a time: sound, intro camera, new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.
 

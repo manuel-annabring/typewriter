@@ -1,7 +1,28 @@
-import { OrbitControls } from '@react-three/drei'
+import { Environment, Lightformer, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Suspense } from 'react'
 import { Typewriter } from '../typewriter/Typewriter.tsx'
+
+// Lightformer panels of the environment. The map has no parallax, so a position is really a
+// direction from the machine. Metal shows only what it reflects: a direction no panel covers
+// reflects the dim backdrop, so keep panels on every side, including the camera side (front).
+interface Panel {
+  name: string
+  form: 'rect' | 'ring'
+  intensity: number
+  color?: string
+  position: [number, number, number]
+  scale: number | [number, number, number]
+  rotation: [number, number, number]
+}
+const PANELS: Panel[] = [
+  { name: 'top', form: 'rect', intensity: 3, position: [0, 4, -1], scale: [8, 4, 1], rotation: [Math.PI / 2, 0, 0] },
+  { name: 'left', form: 'rect', intensity: 2, color: '#fff1dc', position: [-4, 1.5, 2], scale: [3, 5, 1], rotation: [0, Math.PI / 2, 0] },
+  { name: 'right', form: 'rect', intensity: 1.2, color: '#dfe8ff', position: [4, 1, 1], scale: [3, 4, 1], rotation: [0, -Math.PI / 2, 0] },
+  { name: 'front', form: 'rect', intensity: 1.5, color: '#fff6e8', position: [0, 1.5, 5], scale: [8, 3, 1], rotation: [0, Math.PI, 0] },
+  { name: 'floor', form: 'rect', intensity: 0.5, color: '#e8d9c0', position: [0, -2, 0], scale: [8, 8, 1], rotation: [-Math.PI / 2, 0, 0] },
+  { name: 'ring', form: 'ring', intensity: 1, position: [0, 0.5, -4], scale: 4, rotation: [0, 0, 0] },
+]
 
 // <Canvas> creates the WebGL renderer, a three.js Scene and a default camera,
 // and runs the render loop. Everything inside it is a three.js object written
@@ -11,8 +32,27 @@ export default function Scene() {
   return (
     <Canvas camera={{ position: [0.35, 0.4, 0.55], fov: 40, near: 0.01, far: 20 }}>
       <color attach="background" args={['#e8e2d6']} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[0.5, 1, 0.8]} intensity={2.5} />
+      <ambientLight intensity={0.1} />
+      <directionalLight position={[0.5, 1, 0.8]} intensity={2} />
+      {/* Metal reflects its surroundings, so without an environment map it renders black.
+          This one is built from Lightformers (glowing panels drawn into a small cube map
+          once), so it needs no downloaded HDRI. It lights materials only; the background
+          stays the flat <color> above. */}
+      <Environment frames={1} resolution={256} environmentIntensity={0.4}>
+        {/* Dim backdrop: directions no panel covers reflect this instead of pure black. */}
+        <color attach="background" args={['#6b6660']} />
+        {PANELS.map((panel) => (
+          <Lightformer
+            key={panel.name}
+            form={panel.form}
+            intensity={panel.intensity}
+            color={panel.color}
+            position={panel.position}
+            scale={panel.scale}
+            rotation={panel.rotation}
+          />
+        ))}
+      </Environment>
       {/* The GLB loads asynchronously: useGLTF suspends until it is ready. The
           loading overlay (ui/Loader) is HTML, so the fallback here is empty. */}
       <Suspense fallback={null}>

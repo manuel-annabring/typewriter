@@ -5,6 +5,7 @@ import { holdKey } from '../input/dispatchKey.ts'
 import { assertModelContract, KEY_NODE_NAMES } from './contract.ts'
 import { Model } from './TypewriterModel.generated.tsx'
 import { useCarriageAnimation } from './useCarriageAnimation.ts'
+import { useKeyLabels } from './useKeyLabels.ts'
 import { useKeyPressAnimation } from './useKeyPressAnimation.ts'
 import { useLeverAnimation } from './useLeverAnimation.ts'
 import { usePaperTexture } from './usePaperTexture.ts'
@@ -31,6 +32,7 @@ export function Typewriter(props: ThreeElements['group']) {
   }, [])
   useKeyPressAnimation(root)
   usePaperTexture(root)
+  useKeyLabels(root)
   useCarriageAnimation(root)
   useLeverAnimation(root)
 

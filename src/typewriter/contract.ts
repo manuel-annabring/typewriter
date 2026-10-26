@@ -34,6 +34,7 @@ export const REQUIRED_NODE_NAMES: readonly string[] = [
   'Knob_L',
   'Knob_R',
   'PaperHolder',
+  'PaperTable',
   'Paper',
   'Lever',
   'StrikePoint',

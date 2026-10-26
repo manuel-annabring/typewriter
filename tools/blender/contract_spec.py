@@ -45,7 +45,7 @@ def cell_rect_gltf(cell, inner=False):
     )
 
 
-CARRIAGE_CHILDREN =["Platen", "Knob_L", "Knob_R", "PaperHolder", "Paper", "Lever"]
+CARRIAGE_CHILDREN = ["Platen", "Knob_L", "Knob_R", "PaperHolder", "PaperTable", "Paper", "Lever"]
 
 REQUIRED_NAMES = (
     ["Body", "Base", "Carriage", "Lever", "Paper", "StrikePoint", "TypebarBasket"]

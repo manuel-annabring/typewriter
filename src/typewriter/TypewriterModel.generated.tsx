@@ -15,7 +15,9 @@ type GLTFResult = GLTF & {
     Lever_1: THREE.Mesh
     Lever_2: THREE.Mesh
     Paper: THREE.Mesh
-    PaperHolder: THREE.Mesh
+    PaperHolder_1: THREE.Mesh
+    PaperHolder_2: THREE.Mesh
+    PaperTable: THREE.Mesh
     Platen: THREE.Mesh
     Base: THREE.Mesh
     Body: THREE.Mesh
@@ -129,7 +131,11 @@ export function Model(props: ThreeElements['group']) {
             <mesh name="Lever_2" geometry={nodes.Lever_2.geometry} material={materials.Mat_Wood} />
           </group>
           <mesh name="Paper" geometry={nodes.Paper.geometry} material={materials.Mat_Paper} position={[0, 0.12, 0.006]} />
-          <mesh name="PaperHolder" geometry={nodes.PaperHolder.geometry} material={materials.Mat_Metal} />
+          <group name="PaperHolder">
+            <mesh name="PaperHolder_1" geometry={nodes.PaperHolder_1.geometry} material={materials.Mat_Metal} />
+            <mesh name="PaperHolder_2" geometry={nodes.PaperHolder_2.geometry} material={materials.Mat_Platen} />
+          </group>
+          <mesh name="PaperTable" geometry={nodes.PaperTable.geometry} material={materials.Mat_Metal} />
           <mesh name="Platen" geometry={nodes.Platen.geometry} material={materials.Mat_Platen} />
         </group>
         <mesh name="Base" geometry={nodes.Base.geometry} material={materials.Mat_Wood} />

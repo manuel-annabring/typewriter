@@ -87,7 +87,8 @@ The code finds and animates parts by name, so the names and rules below are fixe
 | `Key_A` to `Key_Z`, `Key_0` to `Key_9` | One object per key, origin at the key's center |
 | `Key_Space`, `Key_Tab`, `Key_Enter`, `Key_Backspace`, `Key_Shift_L`, `Key_Shift_R` | Special keys (final list confirmed once the layout is drawn) |
 | `Key_<name>` for punctuation | e.g. `Key_Comma`, `Key_Period` |
-| `Carriage` | Parent group of everything that slides: `Platen`, `Knob_L`, `Knob_R`, `PaperHolder`, `Paper`, `Lever` |
+| `Carriage` | Parent group of everything that slides: `Platen`, `Knob_L`, `Knob_R`, `PaperHolder`, `PaperTable`, `Paper`, `Lever` |
+| `PaperTable` | Child of `Carriage` (amendment, slice 6c). The plate behind the platen that the sheet's tail rests on, sloping at `TAIL_ANGLE`, in `Mat_Metal`. Origin at the `Carriage` origin. The code does not animate it |
 | `Lever` | Child of `Carriage` (it slides with it). Origin at its hinge, so it rotates correctly |
 | `Paper` | Child of `Carriage`. Flat plane with UVs filling 0 to 1, page ratio A4 (decided), subdivided along its height (128 segments) so code can bend it around the platen |
 | `StrikePoint` | Empty marking where characters land, fixed relative to `Body` |
@@ -146,7 +147,7 @@ Each step ends with something visible, is tested, and is committed before the ne
 6. Model detail pass: replace the blockout, materials, optimization. The contract stays the same.
    - Done: `Base`, `Body` (hand-modeled), key labels (6d: atlas UVs and `useKeyLabels`), environment light.
    - To do (still blockouts in `typewriter.blend`): the 44 keycaps (72-vertex blockouts, rounded caps with stems; re-run `steps/02_key_uvs.py` last after reshaping), `Platen`, `Knob_L` / `Knob_R`, `PaperHolder`, `Lever`, `TypebarBasket`. `Paper`, `Carriage` and `StrikePoint` are contract-critical and stay as they are.
-   - To do (paper path): a paper table behind the platen for the sheet's tail to rest on, sloping 35° above horizontal (side view) to match the tail the code already draws (`TAIL_ANGLE` in `src/lib/paperBend.ts`; until the table exists the tail floats). If the table's slope changes, change `TAIL_ANGLE` with it; it must stay flatter than the typed front part, which leans back at about 57° above horizontal. Fix the paper bail (`PaperHolder`): its blockout sits about 25 to 31 mm from the platen axis at 23 to 53 degrees above the front; the code wraps the sheet up to 25 degrees past the tangent point (`BAIL_WRAP`, about 33 degrees above the front), so the bail rollers should sit there, just outside the 22.6 mm paper radius.
+   - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
    - To do (polish): ground shadow, material tuning (roughness and metalness per `Mat_*`), optimization pass against the budgets in section 5.
 7. Phase 2 slices, one at a time: sound, intro camera, new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.

@@ -9,13 +9,13 @@
  * as an angle round the platen axis. The sheet hugs the platen up to the bail and leaves
  * it there, so the free, typed part leans back by this much more than the flat sheet.
  */
-export const BAIL_WRAP = (25 * Math.PI) / 180
+export const BAIL_WRAP = (30 * Math.PI) / 180
 
 /**
  * Angle of the sheet's tail above horizontal, measured in the machine's side view: the
- * slope of the paper table it would rest on (there is no table in the model yet). It has
+ * slope of the paper table it rests on (`PaperTable` in the model). It has
  * to be flatter than the free front part leans (90 degrees minus the sheet lean minus the
- * bail wrap, about 57 degrees), so the tail and the front move apart and never cross.
+ * bail wrap, about 52 degrees), so the tail and the front move apart and never cross.
  */
 export const TAIL_ANGLE = (35 * Math.PI) / 180
 

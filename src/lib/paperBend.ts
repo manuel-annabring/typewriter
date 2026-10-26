@@ -12,12 +12,22 @@
 export const BAIL_WRAP = (25 * Math.PI) / 180
 
 /**
- * How far round the platen the sheet wraps below the tangent point before it runs
- * straight again. Bail wrap plus this is half a turn, so the tail leaves the platen
- * parallel to the free front part, 2 x radius behind it, and the two never cross. A real
- * tail lies on the paper table; there is no table in the model yet.
+ * Angle of the sheet's tail above horizontal, measured in the machine's side view: the
+ * slope of the paper table it would rest on (there is no table in the model yet). It has
+ * to be flatter than the free front part leans (90 degrees minus the sheet lean minus the
+ * bail wrap, about 57 degrees), so the tail and the front move apart and never cross.
  */
-export const WRAP_ANGLE = Math.PI - BAIL_WRAP
+export const TAIL_ANGLE = (35 * Math.PI) / 180
+
+/**
+ * How far round the platen the sheet wraps below the tangent point so its tail leaves at
+ * `tailAngle` above horizontal. `sheetLean` is how far the flat sheet leans back from
+ * vertical (measured from the model at mount). A wrap of half a turn would send the tail
+ * up parallel to the flat sheet; every degree less lays it back by a degree.
+ */
+export function wrapAngleFor(sheetLean: number, tailAngle: number): number {
+  return Math.PI / 2 + sheetLean + tailAngle
+}
 
 /** How much of the ink shows through on the back of the sheet (0 = plain paper). */
 export const BACK_INK = 0.12
@@ -60,16 +70,17 @@ export function bendPoint(s: number, radius: number, bailWrap: number, wrapAngle
   }
 }
 
-/** Vertex shader declarations: uniforms and the GLSL twin of `bendPoint`. */
+/** Vertex shader declarations: uniforms and the GLSL twin of `bendPoint` (uPaperWrap is its wrapAngle). */
 export const BEND_VERTEX_PARS = /* glsl */ `
 uniform float uPaperFeed;
 uniform vec3 uPaperUp;
 uniform vec3 uPaperOut;
 uniform vec3 uPaperTangent;
 uniform float uPaperRadius;
+uniform float uPaperWrap;
 uniform float uPaperFrontSign;
 vec2 paperBendPoint(float s, out vec2 bentNormal) {
-  float psi = clamp(s / uPaperRadius, -${WRAP_ANGLE.toFixed(6)}, ${BAIL_WRAP.toFixed(6)});
+  float psi = clamp(s / uPaperRadius, -uPaperWrap, ${BAIL_WRAP.toFixed(6)});
   float sinPsi = sin(psi);
   float cosPsi = cos(psi);
   float straight = s - psi * uPaperRadius;

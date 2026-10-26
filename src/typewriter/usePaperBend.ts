@@ -8,6 +8,8 @@ import {
   BEND_MAP_FRAGMENT,
   BEND_NORMAL_VERTEX,
   BEND_VERTEX_PARS,
+  TAIL_ANGLE,
+  wrapAngleFor,
 } from '../lib/paperBend.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
@@ -35,6 +37,7 @@ interface PaperUniforms {
   uPaperOut: { value: Vector3 }
   uPaperTangent: { value: Vector3 }
   uPaperRadius: { value: number }
+  uPaperWrap: { value: number }
   uPaperFrontSign: { value: number }
 }
 
@@ -42,9 +45,15 @@ interface PaperUniforms {
  * The uniforms live on the material (userData) and are reused across mounts. three
  * caches the compiled program per material and calls onBeforeCompile only when it builds
  * a new one, so a remount or a hot reload of this module that made fresh uniform objects
- * would update values the cached program never reads.
+ * would update values the cached program never reads. They are stored with the program
+ * key: new shader code gets a new program and, with it, a fresh set of uniforms.
  */
-const UNIFORMS_KEY = 'paperBendUniforms'
+const UNIFORMS_KEY = 'paperBend'
+
+interface StoredUniforms {
+  programKey: string
+  uniforms: PaperUniforms
+}
 
 interface PaperRig {
   uniforms: PaperUniforms
@@ -138,11 +147,14 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
     out.divideScalar(radius)
     const tangent = axisPoint.addScaledVector(out, radius)
     const normal = new Vector3().fromBufferAttribute(paper.geometry.getAttribute('normal'), 0)
+    // How far the flat sheet leans back from vertical (glTF: +y up, front is +z).
+    const sheetLean = Math.atan2(-sheet.up.z, sheet.up.y)
 
     const { cursor } = useTypewriterStore.getState()
     const feed = paperFeedM(cursor.row, strikeAlong, sheet.height)
     const material = paper.material as MeshStandardMaterial
-    let uniforms = material.userData[UNIFORMS_KEY] as PaperUniforms | undefined
+    const stored = material.userData[UNIFORMS_KEY] as StoredUniforms | undefined
+    let uniforms = stored?.programKey === PROGRAM_KEY ? stored.uniforms : undefined
     if (!uniforms) {
       uniforms = {
         uPaperFeed: { value: 0 },
@@ -150,15 +162,18 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
         uPaperOut: { value: new Vector3() },
         uPaperTangent: { value: new Vector3() },
         uPaperRadius: { value: 0 },
+        uPaperWrap: { value: 0 },
         uPaperFrontSign: { value: 1 },
       }
-      material.userData[UNIFORMS_KEY] = uniforms
+      const next: StoredUniforms = { programKey: PROGRAM_KEY, uniforms }
+      material.userData[UNIFORMS_KEY] = next
     }
     uniforms.uPaperFeed.value = feed
     uniforms.uPaperUp.value.copy(sheet.up)
     uniforms.uPaperOut.value.copy(out)
     uniforms.uPaperTangent.value.copy(tangent)
     uniforms.uPaperRadius.value = radius
+    uniforms.uPaperWrap.value = wrapAngleFor(sheetLean, TAIL_ANGLE)
     uniforms.uPaperFrontSign.value = normal.dot(out) >= 0 ? 1 : -1
     rig.current = { uniforms, strikeAlong, paperHeight: sheet.height, feed }
 

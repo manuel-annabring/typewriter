@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { alongFromTangent, BAIL_WRAP, bendPoint, WRAP_ANGLE } from './paperBend.ts'
+import { alongFromTangent, BAIL_WRAP, bendPoint, TAIL_ANGLE, wrapAngleFor } from './paperBend.ts'
 
 const R = 0.0226
+const LEAN = (8 * Math.PI) / 180
+const WRAP_ANGLE = wrapAngleFor(LEAN, TAIL_ANGLE)
 
 const bend = (s: number) => bendPoint(s, R, BAIL_WRAP, WRAP_ANGLE)
 const dist = (a: { along: number; out: number }, b: { along: number; out: number }) =>
@@ -26,7 +28,7 @@ describe('bendPoint', () => {
   })
 
   it('stays on the platen circle between the bail and the end of the wrap', () => {
-    for (const s of [R * BAIL_WRAP * 0.9, 0.003, -0.005, -0.03, -0.06]) {
+    for (const s of [R * BAIL_WRAP * 0.9, 0.003, -0.005, -0.03, -R * WRAP_ANGLE * 0.95]) {
       const p = bend(s)
       // The axis is at (0, -R) in the sheet frame; the normal points away from it.
       expect(Math.hypot(p.along, p.out + R)).toBeCloseTo(R, 9)
@@ -50,15 +52,27 @@ describe('bendPoint', () => {
     expect((b.out - a.out) / 0.1).toBeCloseTo(-Math.sin(BAIL_WRAP), 9)
   })
 
-  it('runs the tail parallel to the free part, a platen diameter behind it, so they never cross', () => {
-    // Distance of a point from the line the free part runs along (through the bail point).
-    const bail = bend(R * BAIL_WRAP)
-    const dir = { along: Math.cos(BAIL_WRAP), out: -Math.sin(BAIL_WRAP) }
-    const offLine = (p: { along: number; out: number }) =>
-      (p.along - bail.along) * dir.out - (p.out - bail.out) * dir.along
-    for (const s of [-R * WRAP_ANGLE - 0.01, -0.15, -0.25]) {
-      expect(Math.abs(offLine(bend(s)))).toBeCloseTo(2 * R, 9)
+  it('lays the tail back at the tail angle above horizontal', () => {
+    // Side view: x back, y up. The flat sheet's up axis leans back by LEAN; `out` faces front.
+    const toSide = (p: { along: number; out: number }) => ({
+      x: p.along * Math.sin(LEAN) - p.out * Math.cos(LEAN),
+      y: p.along * Math.cos(LEAN) + p.out * Math.sin(LEAN),
+    })
+    const a = toSide(bend(-R * WRAP_ANGLE - 0.05))
+    const b = toSide(bend(-R * WRAP_ANGLE - 0.15))
+    expect(b.x).toBeGreaterThan(a.x)
+    expect(Math.atan2(b.y - a.y, b.x - a.x)).toBeCloseTo(TAIL_ANGLE, 9)
+  })
+
+  it('keeps the free part and the tail apart for every feed, so the sheet never crosses itself', () => {
+    // Every feed shows a part of the same two straight runs, so checking the runs covers all rows.
+    let closest = Infinity
+    for (let f = R * BAIL_WRAP; f <= 0.3; f += 0.002) {
+      for (let t = -R * WRAP_ANGLE; t >= -0.3; t -= 0.002) closest = Math.min(closest, dist(bend(f), bend(t)))
     }
+    // The closest pair is where both leave the platen: a chord across bail wrap plus wrap.
+    expect(closest).toBeCloseTo(2 * R * Math.sin((BAIL_WRAP + WRAP_ANGLE) / 2), 6)
+    expect(closest).toBeGreaterThan(0.04)
   })
 
   it('returns unit normals at right angles to the sheet', () => {

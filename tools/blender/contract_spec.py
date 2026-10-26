@@ -61,6 +61,7 @@ MATERIALS = [
     "Mat_Platen",
     "Mat_Metal",
     "Mat_Paper",
+    "Mat_Interior",
 ]
 
 # A4 in meters

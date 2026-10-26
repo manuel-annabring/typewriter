@@ -20,7 +20,8 @@ type GLTFResult = GLTF & {
     PaperTable: THREE.Mesh
     Platen: THREE.Mesh
     Base: THREE.Mesh
-    Body: THREE.Mesh
+    Body_1: THREE.Mesh
+    Body_2: THREE.Mesh
     Key_0_1: THREE.Mesh
     Key_0_2: THREE.Mesh
     Key_1_1: THREE.Mesh
@@ -112,6 +113,7 @@ type GLTFResult = GLTF & {
     Mat_Wood: THREE.MeshStandardMaterial
     Mat_Paper: THREE.MeshStandardMaterial
     Mat_Platen: THREE.MeshStandardMaterial
+    Mat_Interior: THREE.MeshStandardMaterial
     Mat_KeyCream: THREE.MeshStandardMaterial
     Mat_KeyDark: THREE.MeshStandardMaterial
   }
@@ -139,9 +141,11 @@ export function Model(props: ThreeElements['group']) {
           <mesh name="Platen" geometry={nodes.Platen.geometry} material={materials.Mat_Platen} />
         </group>
         <mesh name="Base" geometry={nodes.Base.geometry} material={materials.Mat_Wood} />
-        <mesh name="Body" geometry={nodes.Body.geometry} material={materials.Mat_Body} position={[0, 0.001, 0]}>
+        <group name="Body" position={[0, 0.001, 0]}>
+          <mesh name="Body_1" geometry={nodes.Body_1.geometry} material={materials.Mat_Body} />
+          <mesh name="Body_2" geometry={nodes.Body_2.geometry} material={materials.Mat_Interior} />
           <group name="StrikePoint" position={[0, 0.087, -0.041]} />
-        </mesh>
+        </group>
         <group name="Key_0" position={[0.089, 0.037, 0.06]}>
           <mesh name="Key_0_1" geometry={nodes.Key_0_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_0_2" geometry={nodes.Key_0_2.geometry} material={materials.Mat_KeyDark} />

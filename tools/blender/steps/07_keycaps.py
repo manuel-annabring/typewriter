@@ -3,7 +3,7 @@
 Each key keeps its object, name, material slots and plan position (x, y); only the mesh and
 the height change. Cap tops sit on one line parallel to the side cheeks of the keyboard well
 (ROW0_TOP_Z at row 0, falling SLOPE_DEG towards the front). Stems reach STEM_EMBED below the
-well floor, so a pressed key (4 mm) still hides its stem foot inside the Body. The origin
+well floor (z 13.5: inside the floor slab, and a pressed key's foot, 4 mm lower, inside the Base). The origin
 ends up at the bounding-box centre (contract), so the location is recomputed on every run.
 
 Profile maths (fillet, profile, outline) are the same as the side-view widget the values
@@ -35,7 +35,7 @@ BOTTOM_SEGS = 1
 SEGS_PER_QUARTER = 8  # plan outline points per 90 degrees
 STEM_D = 5.0
 STEM_SEGS = 12
-STEM_EMBED = 3.0  # stem foot below the well floor
+STEM_EMBED = 1.0  # stem foot below the well floor (13.5 mm: inside the 1.5 mm floor slab; steps/08)
 STEM_INTO_CAP = 0.5  # stem top reaches this far into the cap (no gap)
 ROW0_TOP_Z = 61.5  # cap top of the back row
 ROW0_Y = -59.75  # back row centre line (measured), pivot of the top line
@@ -47,7 +47,7 @@ SPACE_H = 6.0
 SPACE_RC = 6.0  # plan corner radius of the space bar
 SPACE_DROP = 0.0  # space bar top relative to the top line
 SPACE_STEM_X = 50.0  # two stems at +-this from the bar centre
-FLOOR_Z = 16.5  # keyboard well floor (measured 2026-10-26)
+FLOOR_Z = 14.5  # keyboard well floor, lowered from 16.5 by steps/08 (Body bottom is at 13.0)
 
 MM = 0.001
 

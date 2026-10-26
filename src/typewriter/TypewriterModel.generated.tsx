@@ -146,164 +146,164 @@ export function Model(props: ThreeElements['group']) {
           <mesh name="Body_2" geometry={nodes.Body_2.geometry} material={materials.Mat_Interior} />
           <group name="StrikePoint" position={[0, 0.087, -0.041]} />
         </group>
-        <group name="Key_0" position={[0.089, 0.037, 0.06]}>
+        <group name="Key_0" position={[0.089, 0.055, 0.056]}>
           <mesh name="Key_0_1" geometry={nodes.Key_0_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_0_2" geometry={nodes.Key_0_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_1" position={[-0.122, 0.037, 0.06]}>
+        <group name="Key_1" position={[-0.122, 0.055, 0.056]}>
           <mesh name="Key_1_1" geometry={nodes.Key_1_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_1_2" geometry={nodes.Key_1_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_2" position={[-0.099, 0.037, 0.06]}>
+        <group name="Key_2" position={[-0.099, 0.055, 0.056]}>
           <mesh name="Key_2_1" geometry={nodes.Key_2_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_2_2" geometry={nodes.Key_2_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_3" position={[-0.075, 0.037, 0.06]}>
+        <group name="Key_3" position={[-0.075, 0.055, 0.056]}>
           <mesh name="Key_3_1" geometry={nodes.Key_3_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_3_2" geometry={nodes.Key_3_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_4" position={[-0.052, 0.037, 0.06]}>
+        <group name="Key_4" position={[-0.052, 0.055, 0.056]}>
           <mesh name="Key_4_1" geometry={nodes.Key_4_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_4_2" geometry={nodes.Key_4_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_5" position={[-0.028, 0.037, 0.06]}>
+        <group name="Key_5" position={[-0.028, 0.055, 0.056]}>
           <mesh name="Key_5_1" geometry={nodes.Key_5_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_5_2" geometry={nodes.Key_5_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_6" position={[-0.005, 0.037, 0.06]}>
+        <group name="Key_6" position={[-0.005, 0.055, 0.056]}>
           <mesh name="Key_6_1" geometry={nodes.Key_6_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_6_2" geometry={nodes.Key_6_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_7" position={[0.019, 0.037, 0.06]}>
+        <group name="Key_7" position={[0.019, 0.055, 0.056]}>
           <mesh name="Key_7_1" geometry={nodes.Key_7_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_7_2" geometry={nodes.Key_7_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_8" position={[0.042, 0.037, 0.06]}>
+        <group name="Key_8" position={[0.042, 0.055, 0.056]}>
           <mesh name="Key_8_1" geometry={nodes.Key_8_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_8_2" geometry={nodes.Key_8_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_9" position={[0.066, 0.037, 0.06]}>
+        <group name="Key_9" position={[0.066, 0.055, 0.056]}>
           <mesh name="Key_9_1" geometry={nodes.Key_9_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_9_2" geometry={nodes.Key_9_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_A" position={[-0.1, 0.028, 0.1]}>
+        <group name="Key_A" position={[-0.1, 0.032, 0.076]}>
           <mesh name="Key_A_1" geometry={nodes.Key_A_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_A_2" geometry={nodes.Key_A_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_B" position={[0.006, 0.024, 0.121]}>
+        <group name="Key_B" position={[0.006, 0.027, 0.086]}>
           <mesh name="Key_B_1" geometry={nodes.Key_B_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_B_2" geometry={nodes.Key_B_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <mesh name="Key_Backspace" geometry={nodes.Key_Backspace.geometry} material={materials.Mat_KeyDark} position={[0.113, 0.037, 0.06]} />
-        <group name="Key_C" position={[-0.041, 0.024, 0.121]}>
+        <mesh name="Key_Backspace" geometry={nodes.Key_Backspace.geometry} material={materials.Mat_KeyDark} position={[0.113, 0.055, 0.056]} />
+        <group name="Key_C" position={[-0.041, 0.027, 0.086]}>
           <mesh name="Key_C_1" geometry={nodes.Key_C_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_C_2" geometry={nodes.Key_C_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_Comma" position={[0.076, 0.024, 0.121]}>
+        <group name="Key_Comma" position={[0.076, 0.027, 0.086]}>
           <mesh name="Key_Comma_1" geometry={nodes.Key_Comma_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Comma_2" geometry={nodes.Key_Comma_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_D" position={[-0.053, 0.028, 0.1]}>
+        <group name="Key_D" position={[-0.053, 0.032, 0.076]}>
           <mesh name="Key_D_1" geometry={nodes.Key_D_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_D_2" geometry={nodes.Key_D_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_E" position={[-0.047, 0.033, 0.079]}>
+        <group name="Key_E" position={[-0.047, 0.037, 0.065]}>
           <mesh name="Key_E_1" geometry={nodes.Key_E_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_E_2" geometry={nodes.Key_E_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <mesh name="Key_Enter" geometry={nodes.Key_Enter.geometry} material={materials.Mat_KeyDark} position={[0.112, 0.028, 0.1]} />
-        <group name="Key_F" position={[-0.029, 0.028, 0.1]}>
+        <mesh name="Key_Enter" geometry={nodes.Key_Enter.geometry} material={materials.Mat_KeyDark} position={[0.112, 0.032, 0.076]} />
+        <group name="Key_F" position={[-0.029, 0.032, 0.076]}>
           <mesh name="Key_F_1" geometry={nodes.Key_F_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_F_2" geometry={nodes.Key_F_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_G" position={[-0.006, 0.028, 0.1]}>
+        <group name="Key_G" position={[-0.006, 0.032, 0.076]}>
           <mesh name="Key_G_1" geometry={nodes.Key_G_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_G_2" geometry={nodes.Key_G_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_H" position={[0.018, 0.028, 0.1]}>
+        <group name="Key_H" position={[0.018, 0.032, 0.076]}>
           <mesh name="Key_H_1" geometry={nodes.Key_H_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_H_2" geometry={nodes.Key_H_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_I" position={[0.071, 0.033, 0.079]}>
+        <group name="Key_I" position={[0.071, 0.037, 0.065]}>
           <mesh name="Key_I_1" geometry={nodes.Key_I_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_I_2" geometry={nodes.Key_I_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_J" position={[0.041, 0.028, 0.1]}>
+        <group name="Key_J" position={[0.041, 0.032, 0.076]}>
           <mesh name="Key_J_1" geometry={nodes.Key_J_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_J_2" geometry={nodes.Key_J_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_K" position={[0.065, 0.028, 0.1]}>
+        <group name="Key_K" position={[0.065, 0.032, 0.076]}>
           <mesh name="Key_K_1" geometry={nodes.Key_K_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_K_2" geometry={nodes.Key_K_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_L" position={[0.088, 0.028, 0.1]}>
+        <group name="Key_L" position={[0.088, 0.032, 0.076]}>
           <mesh name="Key_L_1" geometry={nodes.Key_L_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_L_2" geometry={nodes.Key_L_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_M" position={[0.053, 0.024, 0.121]}>
+        <group name="Key_M" position={[0.053, 0.027, 0.086]}>
           <mesh name="Key_M_1" geometry={nodes.Key_M_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_M_2" geometry={nodes.Key_M_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_N" position={[0.03, 0.024, 0.121]}>
+        <group name="Key_N" position={[0.03, 0.027, 0.086]}>
           <mesh name="Key_N_1" geometry={nodes.Key_N_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_N_2" geometry={nodes.Key_N_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_O" position={[0.094, 0.033, 0.079]}>
+        <group name="Key_O" position={[0.094, 0.037, 0.065]}>
           <mesh name="Key_O_1" geometry={nodes.Key_O_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_O_2" geometry={nodes.Key_O_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_P" position={[0.117, 0.033, 0.079]}>
+        <group name="Key_P" position={[0.117, 0.037, 0.065]}>
           <mesh name="Key_P_1" geometry={nodes.Key_P_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_P_2" geometry={nodes.Key_P_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_Period" position={[0.1, 0.024, 0.121]}>
+        <group name="Key_Period" position={[0.1, 0.027, 0.086]}>
           <mesh name="Key_Period_1" geometry={nodes.Key_Period_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Period_2" geometry={nodes.Key_Period_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_Q" position={[-0.094, 0.033, 0.079]}>
+        <group name="Key_Q" position={[-0.094, 0.037, 0.065]}>
           <mesh name="Key_Q_1" geometry={nodes.Key_Q_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Q_2" geometry={nodes.Key_Q_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_R" position={[-0.023, 0.033, 0.079]}>
+        <group name="Key_R" position={[-0.023, 0.037, 0.065]}>
           <mesh name="Key_R_1" geometry={nodes.Key_R_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_R_2" geometry={nodes.Key_R_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_S" position={[-0.076, 0.028, 0.1]}>
+        <group name="Key_S" position={[-0.076, 0.032, 0.076]}>
           <mesh name="Key_S_1" geometry={nodes.Key_S_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_S_2" geometry={nodes.Key_S_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <mesh name="Key_Shift_L" geometry={nodes.Key_Shift_L.geometry} material={materials.Mat_KeyDark} position={[-0.112, 0.024, 0.121]} />
-        <mesh name="Key_Shift_R" geometry={nodes.Key_Shift_R.geometry} material={materials.Mat_KeyDark} position={[0.123, 0.024, 0.121]} />
-        <group name="Key_Space" position={[0.005, 0.02, 0.139]}>
+        <mesh name="Key_Shift_L" geometry={nodes.Key_Shift_L.geometry} material={materials.Mat_KeyDark} position={[-0.112, 0.027, 0.086]} />
+        <mesh name="Key_Shift_R" geometry={nodes.Key_Shift_R.geometry} material={materials.Mat_KeyDark} position={[0.123, 0.027, 0.086]} />
+        <group name="Key_Space" position={[0.005, 0.02, 0.094]}>
           <mesh name="Key_Space_1" geometry={nodes.Key_Space_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Space_2" geometry={nodes.Key_Space_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_T" position={[0, 0.033, 0.079]}>
+        <group name="Key_T" position={[0, 0.037, 0.065]}>
           <mesh name="Key_T_1" geometry={nodes.Key_T_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_T_2" geometry={nodes.Key_T_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <mesh name="Key_Tab" geometry={nodes.Key_Tab.geometry} material={materials.Mat_KeyDark} position={[-0.117, 0.033, 0.079]} />
-        <group name="Key_U" position={[0.047, 0.033, 0.079]}>
+        <mesh name="Key_Tab" geometry={nodes.Key_Tab.geometry} material={materials.Mat_KeyDark} position={[-0.117, 0.037, 0.065]} />
+        <group name="Key_U" position={[0.047, 0.037, 0.065]}>
           <mesh name="Key_U_1" geometry={nodes.Key_U_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_U_2" geometry={nodes.Key_U_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_V" position={[-0.018, 0.024, 0.121]}>
+        <group name="Key_V" position={[-0.018, 0.027, 0.086]}>
           <mesh name="Key_V_1" geometry={nodes.Key_V_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_V_2" geometry={nodes.Key_V_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_W" position={[-0.071, 0.033, 0.079]}>
+        <group name="Key_W" position={[-0.071, 0.037, 0.065]}>
           <mesh name="Key_W_1" geometry={nodes.Key_W_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_W_2" geometry={nodes.Key_W_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_X" position={[-0.064, 0.024, 0.121]}>
+        <group name="Key_X" position={[-0.064, 0.027, 0.086]}>
           <mesh name="Key_X_1" geometry={nodes.Key_X_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_X_2" geometry={nodes.Key_X_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_Y" position={[0.023, 0.033, 0.079]}>
+        <group name="Key_Y" position={[0.023, 0.037, 0.065]}>
           <mesh name="Key_Y_1" geometry={nodes.Key_Y_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Y_2" geometry={nodes.Key_Y_2.geometry} material={materials.Mat_KeyDark} />
         </group>
-        <group name="Key_Z" position={[-0.088, 0.024, 0.121]}>
+        <group name="Key_Z" position={[-0.088, 0.027, 0.086]}>
           <mesh name="Key_Z_1" geometry={nodes.Key_Z_1.geometry} material={materials.Mat_KeyCream} />
           <mesh name="Key_Z_2" geometry={nodes.Key_Z_2.geometry} material={materials.Mat_KeyDark} />
         </group>

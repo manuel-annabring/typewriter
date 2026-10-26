@@ -15,6 +15,19 @@ import { useTypewriterStore } from '../store/typewriterStore.ts'
 const LAMBDA_FEED = 14
 const SETTLE_EPSILON = 5e-5 // 0.05 mm
 const AXIS = new Vector3(1, 0, 0)
+/**
+ * three looks compiled programs up by this key, not by the shader source, so it carries
+ * the injected chunks: a change to the bend (or its constants) gets a fresh compile
+ * instead of a cached program with the old GLSL.
+ */
+const PROGRAM_KEY = [
+  'paper-bend',
+  BEND_VERTEX_PARS,
+  BEND_NORMAL_VERTEX,
+  BEND_BEGIN_VERTEX,
+  BEND_FRAGMENT_PARS,
+  BEND_MAP_FRAGMENT,
+].join('\n')
 
 interface PaperUniforms {
   uPaperFeed: { value: number }
@@ -164,7 +177,7 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
         .replace('#include <common>', `#include <common>\n${BEND_FRAGMENT_PARS}`)
         .replace('#include <map_fragment>', BEND_MAP_FRAGMENT)
     }
-    material.customProgramCacheKey = () => 'paper-bend'
+    material.customProgramCacheKey = () => PROGRAM_KEY
     material.needsUpdate = true
     // Culling uses the flat, unfed mesh's bounds, which are not where the shader draws it.
     const previousCulled = paper.frustumCulled

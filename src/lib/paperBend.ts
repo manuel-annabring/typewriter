@@ -5,11 +5,19 @@
 // keep the two in sync.
 
 /**
- * How far round the platen the sheet wraps before it runs straight again. Half a turn
- * sends the tail back up behind the platen, parallel to the front of the sheet. A smaller
- * angle would lean it back like a paper table, but there is no table in the model yet.
+ * How far above the tangent point the paper bail holds the sheet against the platen,
+ * as an angle round the platen axis. The sheet hugs the platen up to the bail and leaves
+ * it there, so the free, typed part leans back by this much more than the flat sheet.
  */
-export const WRAP_ANGLE = Math.PI
+export const BAIL_WRAP = (25 * Math.PI) / 180
+
+/**
+ * How far round the platen the sheet wraps below the tangent point before it runs
+ * straight again. Bail wrap plus this is half a turn, so the tail leaves the platen
+ * parallel to the free front part, 2 x radius behind it, and the two never cross. A real
+ * tail lies on the paper table; there is no table in the model yet.
+ */
+export const WRAP_ANGLE = Math.PI - BAIL_WRAP
 
 /** How much of the ink shows through on the back of the sheet (0 = plain paper). */
 export const BACK_INK = 0.12
@@ -32,22 +40,22 @@ export function alongFromTangent(alongRest: number, feed: number, tangentAlong: 
 }
 
 /**
- * Bends a sheet point at distance `s` from the tangent point. Above the tangent point
- * (s >= 0) the sheet is flat. Below it the sheet wraps round a circle of `radius` whose
- * centre is `radius` behind the tangent point, up to `wrapAngle`; what is left runs
- * straight on along the wrap's last direction. Distances along the sheet are kept, so
- * text drawn on the flat sheet lands at the same arc length on the wrap.
+ * Bends a sheet point at distance `s` from the tangent point. The sheet follows a circle
+ * of `radius` whose centre is `radius` behind the tangent point: upward to `bailWrap`
+ * (the paper bail), downward to `wrapAngle` (round the bottom of the platen). Past either
+ * end it runs straight on along the circle's last direction. `psi` is the angle round the
+ * circle from the tangent point, positive up and back over the platen. Distances along
+ * the sheet are kept, so text drawn on the flat sheet lands at the same arc length.
  */
-export function bendPoint(s: number, radius: number, wrapAngle: number): BentPoint {
-  if (s >= 0) return { along: s, out: 0, normalAlong: 0, normalOut: 1 }
-  const phi = Math.min(-s / radius, wrapAngle)
-  const sin = Math.sin(phi)
-  const cos = Math.cos(phi)
-  const tail = -s - phi * radius
+export function bendPoint(s: number, radius: number, bailWrap: number, wrapAngle: number): BentPoint {
+  const psi = Math.min(Math.max(s / radius, -wrapAngle), bailWrap)
+  const sin = Math.sin(psi)
+  const cos = Math.cos(psi)
+  const straight = s - psi * radius
   return {
-    along: -radius * sin - tail * cos,
-    out: -radius + radius * cos - tail * sin,
-    normalAlong: -sin,
+    along: radius * sin + straight * cos,
+    out: radius * cos - radius - straight * sin,
+    normalAlong: sin,
     normalOut: cos,
   }
 }
@@ -61,16 +69,12 @@ uniform vec3 uPaperTangent;
 uniform float uPaperRadius;
 uniform float uPaperFrontSign;
 vec2 paperBendPoint(float s, out vec2 bentNormal) {
-  if (s >= 0.0) {
-    bentNormal = vec2(0.0, 1.0);
-    return vec2(s, 0.0);
-  }
-  float phi = min(-s / uPaperRadius, ${WRAP_ANGLE.toFixed(6)});
-  float sinPhi = sin(phi);
-  float cosPhi = cos(phi);
-  float tail = -s - phi * uPaperRadius;
-  bentNormal = vec2(-sinPhi, cosPhi);
-  return vec2(-uPaperRadius * sinPhi - tail * cosPhi, -uPaperRadius + uPaperRadius * cosPhi - tail * sinPhi);
+  float psi = clamp(s / uPaperRadius, -${WRAP_ANGLE.toFixed(6)}, ${BAIL_WRAP.toFixed(6)});
+  float sinPsi = sin(psi);
+  float cosPsi = cos(psi);
+  float straight = s - psi * uPaperRadius;
+  bentNormal = vec2(sinPsi, cosPsi);
+  return vec2(uPaperRadius * sinPsi + straight * cosPsi, uPaperRadius * cosPsi - uPaperRadius - straight * sinPsi);
 }
 `
 

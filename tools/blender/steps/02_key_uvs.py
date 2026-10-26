@@ -3,7 +3,7 @@
 Gives every Key_* object one UV layer. The top face (the highest upward-facing polygon) is
 projected straight down into the key's atlas cell, inside the cell margin, upright for a viewer
 in front of the machine (text up = +Y). Every other face collapses to the centre of the blank
-cell, so cap sides, stems and a cream key's dark parts show the plain base colour.
+cell, so cap sides, levers and a cream key's dark parts show the plain base colour.
 
 Re-runnable: it replaces the UV layer on each run, so run it last after any reshaping of the keys.
 Run live (exec the file in the MCP session) or headless (`Blender -b typewriter.blend --python ...`).

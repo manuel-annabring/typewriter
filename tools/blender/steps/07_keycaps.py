@@ -62,6 +62,7 @@ SPACE_RC = 6.0  # plan corner radius of the space bar
 SPACE_DROP = 0.0  # space bar top relative to the top line
 SPACE_STEM_X = 50.0  # two levers at +-this from the bar centre
 FLOOR_Z = 14.5  # keyboard well floor (steps/08); only used to report arms that dip into it
+# WALL_Y and FLOOR_Z are measured from Body: if Body is edited, re-measure them.
 
 MM = 0.001
 
@@ -76,6 +77,12 @@ import contract_spec as spec  # noqa: E402
 BOTTOM_ROW_X = (-105.5, -82.0, -58.5, -35.0, -11.5, 12.0, 35.5, 59.0, 82.5, 106.0, 129.5)
 BOTTOM_ROW_SHIFT = -6.0
 X_OVERRIDE = {n: x + BOTTOM_ROW_SHIFT for n, x in zip(spec.KEY_ROWS[3], BOTTOM_ROW_X)}
+
+# The back row moves 1 mm right: Key_1's cap corner touched the hump's chamfered front-left
+# corner (clearance 0.03 mm); at +1 mm it has 0.44 mm. Backspace keeps its room on the right.
+BACK_ROW_X = (-122.218, -98.718, -75.218, -51.718, -28.218, -4.718, 18.782, 42.282, 65.782, 89.282, 112.782)
+BACK_ROW_SHIFT = 1.0
+X_OVERRIDE.update({n: x + BACK_ROW_SHIFT for n, x in zip(spec.KEY_ROWS[0], BACK_ROW_X)})
 
 
 def fillet(p, u, v, r, n):

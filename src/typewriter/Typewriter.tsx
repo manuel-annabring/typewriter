@@ -75,8 +75,10 @@ export function Typewriter(props: ThreeElements['group']) {
 
   const onPointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
     const name = pressableOf(e.object)
-    if (!name) return
+    // Raycasts don't occlude: without this, a click on the Body would also reach a key lever
+    // behind it, so any non-pressable hit stops the event too.
     e.stopPropagation()
+    if (!name) return
     releaseHeld.current?.()
     const releaseKey = holdKey(name)
     // OrbitControls listens on the DOM, so stopPropagation above doesn't stop
@@ -92,9 +94,8 @@ export function Typewriter(props: ThreeElements['group']) {
   // another, an out can land after an over, and move corrects that.
   const showCursor = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (!pressableOf(e.object)) return
       e.stopPropagation()
-      setCursor('pointer')
+      setCursor(pressableOf(e.object) ? 'pointer' : '')
     },
     [setCursor],
   )

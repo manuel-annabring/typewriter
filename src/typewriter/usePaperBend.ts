@@ -38,6 +38,7 @@ interface PaperUniforms {
   uPaperTangent: { value: Vector3 }
   uPaperRadius: { value: number }
   uPaperWrap: { value: number }
+  uPaperTopRest: { value: number }
   uPaperFrontSign: { value: number }
 }
 
@@ -163,6 +164,7 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
         uPaperTangent: { value: new Vector3() },
         uPaperRadius: { value: 0 },
         uPaperWrap: { value: 0 },
+        uPaperTopRest: { value: 0 },
         uPaperFrontSign: { value: 1 },
       }
       const next: StoredUniforms = { programKey: PROGRAM_KEY, uniforms }
@@ -174,6 +176,9 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
     uniforms.uPaperTangent.value.copy(tangent)
     uniforms.uPaperRadius.value = radius
     uniforms.uPaperWrap.value = wrapAngleFor(sheetLean, TAIL_ANGLE)
+    // The top edge's distance along the sheet from the tangent point, unfed. The shader
+    // adds the feed and takes off the bail arc to get the free length that droops.
+    uniforms.uPaperTopRest.value = sheet.height / 2 + sheet.centre.clone().sub(tangent).dot(sheet.up)
     uniforms.uPaperFrontSign.value = normal.dot(out) >= 0 ? 1 : -1
     rig.current = { uniforms, strikeAlong, paperHeight: sheet.height, feed }
 

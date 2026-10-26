@@ -10,8 +10,10 @@ import type { GLTF } from 'three-stdlib'
 
 type GLTFResult = GLTF & {
   nodes: {
-    Knob_L: THREE.Mesh
-    Knob_R: THREE.Mesh
+    Knob_L_1: THREE.Mesh
+    Knob_L_2: THREE.Mesh
+    Knob_R_1: THREE.Mesh
+    Knob_R_2: THREE.Mesh
     Lever_1: THREE.Mesh
     Lever_2: THREE.Mesh
     Paper: THREE.Mesh
@@ -126,8 +128,14 @@ export function Model(props: ThreeElements['group']) {
     <group {...props} dispose={null}>
       <group name="Scene">
         <group name="Carriage" position={[0.085, 0.092, -0.064]}>
-          <mesh name="Knob_L" geometry={nodes.Knob_L.geometry} material={materials.Mat_Body} position={[-0.146, 0, 0]} />
-          <mesh name="Knob_R" geometry={nodes.Knob_R.geometry} material={materials.Mat_Body} position={[0.146, 0, 0]} />
+          <group name="Knob_L" position={[-0.146, 0, 0]}>
+            <mesh name="Knob_L_1" geometry={nodes.Knob_L_1.geometry} material={materials.Mat_Body} />
+            <mesh name="Knob_L_2" geometry={nodes.Knob_L_2.geometry} material={materials.Mat_Metal} />
+          </group>
+          <group name="Knob_R" position={[0.146, 0, 0]}>
+            <mesh name="Knob_R_1" geometry={nodes.Knob_R_1.geometry} material={materials.Mat_Body} />
+            <mesh name="Knob_R_2" geometry={nodes.Knob_R_2.geometry} material={materials.Mat_Metal} />
+          </group>
           <group name="Lever" position={[-0.125, 0.028, 0]}>
             <mesh name="Lever_1" geometry={nodes.Lever_1.geometry} material={materials.Mat_Metal} />
             <mesh name="Lever_2" geometry={nodes.Lever_2.geometry} material={materials.Mat_Wood} />

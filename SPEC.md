@@ -64,7 +64,7 @@ What NOT to trust:
 - **Typewriter sound**: key clack, spacebar, bell, carriage return, lever. Audio starts only after the first user interaction (browser autoplay rules). Source and license TBD.
 - **Intro camera animation**: camera moves in to the typewriter on load.
 - **Paper feed and new sheet**: pull the finished page out and insert a fresh one.
-- **Whole sheet visible, wrapped around the platen**: the full page stays in view the whole time and curves around the platen, instead of being clipped below the strike point (the slice 5 stopgap, a clipping plane on `Mat_Paper`). The `Paper` mesh is already subdivided for this (section 5, slice 5b); the bend is a vertex shader on `Mat_Paper` with the line feed as a uniform, and needs no further contract change.
+- **Whole sheet visible, wrapped around the platen** (done): the full page stays in view the whole time and curves around the platen, instead of being clipped below the strike point (the slice 5 stopgap, a clipping plane on `Mat_Paper`). The `Paper` mesh is already subdivided for this (section 5, slice 5b); the bend is a vertex shader on `Mat_Paper` with the line feed as a uniform, and needs no further contract change.
 - **Save or share**: download the page as an image and copy the text to the clipboard.
 - **Mobile support** (stretch): tap keys with comfortable touch targets, camera framing for portrait screens. Desktop comes first.
 
@@ -162,6 +162,8 @@ Each step ends with something visible, is tested, and is committed before the ne
 8. Release: performance check, loading state, deployment, portfolio write-up.
 
 ## 8. Definition of done (Phase 1)
+
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). Next: camera (intro, limits, animations).
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.

@@ -57,12 +57,17 @@ What NOT to trust:
    - Near the right margin a bell event fires (silent in Phase 1, sound comes in Phase 2).
    - At the margin the carriage locks.
    - Enter or a click on the lever returns the carriage to the left and feeds the paper up one line.
-6. **Scene basics**: soft studio lighting, ground shadow, warm neutral background taken from the palette, loading state while the GLB loads, camera with limited orbit (proposed, see open questions).
+6. **Scene basics**: soft studio lighting, ground shadow, warm neutral background taken from the palette, loading state while the GLB loads, camera with a limited orbit (decided 2026-10-29, see the Phase 2 camera entry).
 
 ### Phase 2: Extras (all wanted, built after Phase 1 works)
 
 - **Typewriter sound**: key clack, spacebar, bell, carriage return, lever. Audio starts only after the first user interaction (browser autoplay rules). Source and license TBD.
-- **Intro camera animation**: camera moves in to the typewriter on load.
+- **Camera** (done, 2026-10-29): free orbit inside limits, an intro flight, small event moves and a reset button. Constants live in `src/scene/cameraConfig.ts`; the maths is in `src/lib/cameraPath.ts`, the behavior in `src/scene/CameraRig.tsx`.
+  - Limits: no pan (the machine is always the target), elevation 8° to 61°, azimuth ±70° round the front, distance 0.30 to 1.50 m, damping 0.08. The resting view is 0.69 m from the target at azimuth 28.6° and elevation 24.1°.
+  - Intro: starts 2x as far away, 45° up and swung 40° to the left, eases out into the resting view in 2.5 s, 0.4 s after mount (the loader fade). A pointer press or the wheel stops it where it is; a key press fast-forwards it in 0.4 s; typing is never blocked. Reduced motion skips it.
+  - Event moves: offsets on top of the user's own orbit. The look-at point follows the carriage (40% of its travel), the camera pushes in 8% while typing and pulls back 10% after 4 s idle. They fade out while the user orbits and return 2 s after the last input. Reduced motion turns them off.
+  - Reset view: a button (bottom right) offered only after the user has orbited or zoomed; it eases back to the resting view in 0.8 s.
+  - Still open: portrait and small windows (belongs to the mobile slice; the constants are in one module so the distance can scale with the aspect ratio).
 - **Paper feed and new sheet**: pull the finished page out and insert a fresh one.
 - **Whole sheet visible, wrapped around the platen** (done): the full page stays in view the whole time and curves around the platen, instead of being clipped below the strike point (the slice 5 stopgap, a clipping plane on `Mat_Paper`). The `Paper` mesh is already subdivided for this (section 5, slice 5b); the bend is a vertex shader on `Mat_Paper` with the line feed as a uniform, and needs no further contract change.
 - **Save or share**: download the page as an image and copy the text to the clipboard.
@@ -158,12 +163,12 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
    - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
    - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
-7. Phase 2 slices, one at a time: sound, intro camera, new sheet, save or share, mobile.
+7. Phase 2 slices, one at a time: sound, ~~intro camera~~ (done, camera: limits, intro, event moves, reset), new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.
 
 ## 8. Definition of done (Phase 1)
 
-Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). Next: camera (intro, limits, animations).
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, event moves, reset) is built too. Next: sound, new sheet, save or share, mobile.
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.
@@ -182,7 +187,7 @@ Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: th
 - ~~Backspace~~ Decided in slice 5: moves the carriage back one column without erasing, clears the margin lock, and typing over it overstrikes. Tab is still open (next 5-column stop is the proposal).
 - Tab key and Shift: does shift change the printed character, and what do the key caps show?
 - Lines and characters per page (the paper format is decided: A4).
-- Camera: orbit limits, or a fixed view?
+- ~~Camera: orbit limits, or a fixed view?~~ Decided 2026-10-29: free orbit inside limits (no pan, elevation 8° to 61°, azimuth ±70° round the front, 0.30 to 1.50 m).
 - Is the page content kept between visits (localStorage)?
 - Hosting and domain.
 - Sound source: record yourself or use licensed samples?

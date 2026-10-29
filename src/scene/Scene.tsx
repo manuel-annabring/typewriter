@@ -1,6 +1,8 @@
-import { ContactShadows, Environment, Lightformer, OrbitControls, StatsGl } from '@react-three/drei'
+import { ContactShadows, Environment, Lightformer, OrbitControls, StatsGl, useProgress } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
+import { useTypewriterStore } from '../store/typewriterStore.ts'
+import { useLoadProgress } from '../ui/loadProgress.ts'
 import { Typewriter } from '../typewriter/Typewriter.tsx'
 
 // Lightformer panels of the environment. The map has no parallax, so a position is really a
@@ -28,6 +30,39 @@ const PANELS: Panel[] = [
 // ContactShadows out so its cost can be compared without editing code.
 const SHOW_STATS = import.meta.env.DEV
 const SHADOWS = !(import.meta.env.DEV && new URLSearchParams(window.location.search).has('noshadow'))
+
+// ContactShadows draws `frames` frames after each (re)render of the component, then stops, because
+// drei keeps its frame counter in a local that a re-render resets. So re-rendering this wrapper
+// when something moves (a keypress, the cursor, the model arriving) redraws the shadow for
+// SETTLE_FRAMES, enough for the carriage, paper feed and key springs to come to rest. At rest the
+// depth pass and four blur passes are skipped: about half of all draw calls and triangles.
+const SETTLE_FRAMES = 120
+function Shadow() {
+  useTypewriterStore((s) => s.cursor)
+  useTypewriterStore((s) => s.pressedKeys)
+  useProgress((s) => s.progress)
+  return (
+    <ContactShadows
+      position={[0, 0, 0]}
+      scale={1}
+      far={0.25}
+      frames={SETTLE_FRAMES}
+      resolution={512}
+      blur={2.5}
+      opacity={1.2}
+      color="#2b2118"
+    />
+  )
+}
+
+// useProgress reads three's global loading manager; this copies it to the overlay's store.
+function ProgressBridge() {
+  const progress = useProgress((s) => s.progress)
+  useEffect(() => {
+    useLoadProgress.setState({ progress })
+  }, [progress])
+  return null
+}
 
 // <Canvas> creates the WebGL renderer, a three.js Scene and a default camera,
 // and runs the render loop. Everything inside it is a three.js object written
@@ -60,25 +95,16 @@ export default function Scene() {
       </Environment>
       {/* The GLB loads asynchronously: useGLTF suspends until it is ready. The
           loading overlay (ui/Loader) is HTML, so the fallback here is empty. */}
+      <ProgressBridge />
       <Suspense fallback={null}>
         <Typewriter />
       </Suspense>
       {/* Ground shadow: ContactShadows renders the scene's depth from below the floor into a
           blurred, transparent texture on a plane at y = 0 (the machine sits on it), so the
           flat background colour shows through. No shadow map or light needed. It re-renders
-          every frame so the sliding carriage and pressed keys move the shadow too; the
-          resolution is low because the blur hides the detail. */}
-      {SHADOWS && (
-        <ContactShadows
-          position={[0, 0, 0]}
-          scale={1}
-          far={0.25}
-          resolution={512}
-          blur={2.5}
-          opacity={1.2}
-          color="#2b2118"
-        />
-      )}
+          only while something moves (see Shadow), so the sliding carriage and pressed keys move the
+          shadow too; the resolution is low because the blur hides the detail. */}
+      {SHADOWS && <Shadow />}
       {SHOW_STATS && <StatsGl className="dev-stats" />}
       {/* OrbitControls (from drei) lets you drag to rotate, scroll to zoom and
           right-drag to pan the camera around a target point. */}

@@ -101,7 +101,7 @@ The code finds and animates parts by name, so the names and rules below are fixe
 - Origins at pivot points (keys at the center, lever at the hinge, `Carriage` at its rest position at the start of a line).
 - Materials named: `Mat_Body`, `Mat_KeyCream`, `Mat_KeyDark`, `Mat_Wood`, `Mat_Platen`, `Mat_Metal`, `Mat_Paper`, `Mat_Interior` (amendment, slice 6c cavity: the dark matte inside of the keyboard well, used by `Body`'s second material slot).
 - `Body` therefore has two material slots (`Mat_Body`, `Mat_Interior`) and exports as a group named `Body` with child meshes `Body_1` and `Body_2`; `StrikePoint` stays its child.
-- Proposed budgets (confirm after the first export): GLB under about 5 MB, triangle count under about 100k.
+- Budgets (measured 2026-10-29 on an M1 Pro MacBook Pro, confirmed): GLB under 1.5 MB (now 917 kB, 89 kB brotli); model under 100k triangles (now 36k; the ground-shadow depth pass renders them again while something moves); main pass about 100 draw calls (now 99); 60 fps at devicePixelRatio 2 while typing and during the carriage return (met, vsync-capped); entry JS under 300 kB (now 227 kB, 72 kB gzip), the 3D scene is a separate lazy chunk (1.08 MB, 294 kB gzip).
 - Before each export, run a contract check (names present, transforms applied, origins sensible).
 
 ### Key label atlas (amendment, slice 6d)
@@ -156,7 +156,8 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done (typebar basket, session 4): static fan at rest in the well opening, picked in a side-view widget (preset "flat radial fan"; the upright fan looked like bars swung up against the strike point, the hanging one had the slugs facing away from the paper). 15 flat bars in a +-45 degree fan round the strike point, 5 degrees above horizontal, each with its own 3 mm cube (type slug) at the outer end; the inner ends meet one pivot rail on two posts. No rail joins the slugs. 536 vertices, 940 triangles, one material (`Mat_Metal`), no overlaps with Body, platen, paper, paper holder, paper table or keys (15 mm clear of the sheet). Journal: `steps/12_typebar_basket.py` (re-runnable).
    - To do (still blockouts in `typewriter.blend`): `PaperHolder` (partly modeled, see paper path). `Paper`, `Carriage` and `StrikePoint` are contract-critical and stay as they are.
    - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
-   - To do (polish): ground shadow, material tuning (roughness and metalness per `Mat_*`), optimization pass against the budgets in section 5.
+   - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
+   - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
 7. Phase 2 slices, one at a time: sound, intro camera, new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.
 

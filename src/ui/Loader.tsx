@@ -1,8 +1,8 @@
-import { useProgress } from '@react-three/drei'
+import { useLoadProgress } from './loadProgress.ts'
 
-// useProgress reads three's global loading manager, so it works outside the <Canvas>.
+// Painted before the 3D chunk arrives; the scene reports progress through useLoadProgress.
 export default function Loader() {
-  const progress = useProgress((s) => s.progress)
+  const progress = useLoadProgress((s) => s.progress)
   const done = progress >= 100
 
   return (

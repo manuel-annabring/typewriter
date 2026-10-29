@@ -11,11 +11,18 @@ import {
   REST_TARGET,
 } from '../scene/cameraConfig.ts'
 import {
+  clampScale,
+  damp,
+  distanceScale,
   easeOutCubic,
+  followOffsetM,
   introEase,
+  isIdleAfterTyping,
+  isTyping,
   lerpSpherical,
   setFromSpherical,
   toSpherical,
+  userGateTarget,
   type Spherical,
   type Vec3,
 } from './cameraPath.ts'
@@ -103,5 +110,51 @@ describe('camera config', () => {
     expect(INTRO_START_SPHERICAL.radius).toBeCloseTo(REST_SPHERICAL.radius * 2, 9)
     expect(deg(INTRO_START_SPHERICAL.elevation)).toBeCloseTo(45, 9)
     expect(deg(INTRO_START_SPHERICAL.azimuth)).toBeCloseTo(deg(REST_SPHERICAL.azimuth) - 40, 9)
+  })
+})
+
+describe('event moves', () => {
+  it('damp eases toward the target without overshooting and is frame-rate independent', () => {
+    expect(damp(0, 1, 2, 0)).toBe(0)
+    expect(damp(0, 1, 2, 1)).toBeCloseTo(1 - Math.exp(-2), 9)
+    expect(damp(0.9, 1, 5, 10)).toBeLessThanOrEqual(1)
+    let a = 0
+    for (let i = 0; i < 60; i++) a = damp(a, 1, 2, 1 / 60)
+    expect(a).toBeCloseTo(damp(0, 1, 2, 1), 9)
+  })
+
+  it('follows the carriage to the left, by the given share of its travel', () => {
+    expect(followOffsetM(0, 0.4)).toBeCloseTo(0, 12)
+    expect(followOffsetM(60, 0.4)).toBeCloseTo(-0.4 * 60 * 0.00254, 9)
+    expect(followOffsetM(66, 1)).toBeLessThan(followOffsetM(10, 1))
+  })
+
+  it('treats typing as active only inside its window, and idle only after typing', () => {
+    expect(isTyping(10, 9, 1.2)).toBe(true)
+    expect(isTyping(10, 8.7, 1.2)).toBe(false)
+    expect(isTyping(10, -Infinity, 1.2)).toBe(false)
+    expect(isIdleAfterTyping(false, 100, -Infinity, 4)).toBe(false)
+    expect(isIdleAfterTyping(true, 10, 7, 4)).toBe(false)
+    expect(isIdleAfterTyping(true, 12, 7, 4)).toBe(true)
+  })
+
+  it('shuts the moves off while the user orbits and for the resume delay after', () => {
+    expect(userGateTarget(true, 10, 10, 2)).toBe(0)
+    expect(userGateTarget(false, 11, 10, 2)).toBe(0)
+    expect(userGateTarget(false, 12.5, 10, 2)).toBe(1)
+    expect(userGateTarget(false, 0, -Infinity, 2)).toBe(1)
+  })
+
+  it('pushes in while typing and pulls back when idle, scaled by the gate', () => {
+    expect(distanceScale(0, 0, 1, 0.08, 0.1)).toBe(1)
+    expect(distanceScale(1, 0, 1, 0.08, 0.1)).toBeCloseTo(0.92, 9)
+    expect(distanceScale(0, 1, 1, 0.08, 0.1)).toBeCloseTo(1.1, 9)
+    expect(distanceScale(1, 1, 0, 0.08, 0.1)).toBe(1)
+  })
+
+  it('keeps the distance factor inside the camera range so the offset can be undone', () => {
+    expect(clampScale(0.92, 0.3, 0.3, 1.5)).toBe(1)
+    expect(clampScale(0.92, 0.5, 0.3, 1.5)).toBe(0.92)
+    expect(clampScale(1.1, 1.45, 0.3, 1.5)).toBeCloseTo(1.5 / 1.45, 9)
   })
 })

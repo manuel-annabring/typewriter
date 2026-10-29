@@ -9,7 +9,7 @@ import {
   AZIMUTH_LIMIT,
   DAMPING_FACTOR,
   FOV,
-  INTRO_ENABLED,
+  MOTION_ENABLED,
   INTRO_START_POSITION,
   MAX_DISTANCE,
   MAX_POLAR_ANGLE,
@@ -84,7 +84,7 @@ function ProgressBridge() {
 // The model is in meters, so the camera sits about half a meter from the machine.
 export default function Scene() {
   return (
-    <Canvas camera={{ position: [...(INTRO_ENABLED ? INTRO_START_POSITION : REST_POSITION)], fov: FOV, near: 0.01, far: 20 }}>
+    <Canvas camera={{ position: [...(MOTION_ENABLED ? INTRO_START_POSITION : REST_POSITION)], fov: FOV, near: 0.01, far: 20 }}>
       <color attach="background" args={['#e8e2d6']} />
       <ambientLight intensity={0.1} />
       <directionalLight position={[0.5, 1, 0.8]} intensity={2} />
@@ -112,7 +112,7 @@ export default function Scene() {
       <ProgressBridge />
       <Suspense fallback={null}>
         <Typewriter />
-        {INTRO_ENABLED && <CameraRig />}
+        {MOTION_ENABLED && <CameraRig />}
       </Suspense>
       {/* Ground shadow: ContactShadows renders the scene's depth from below the floor into a
           blurred, transparent texture on a plane at y = 0 (the machine sits on it), so the

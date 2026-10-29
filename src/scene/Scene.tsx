@@ -4,6 +4,17 @@ import { Suspense, useEffect } from 'react'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 import { useLoadProgress } from '../ui/loadProgress.ts'
 import { Typewriter } from '../typewriter/Typewriter.tsx'
+import {
+  AZIMUTH_LIMIT,
+  DAMPING_FACTOR,
+  FOV,
+  MAX_DISTANCE,
+  MAX_POLAR_ANGLE,
+  MIN_DISTANCE,
+  MIN_POLAR_ANGLE,
+  REST_POSITION,
+  REST_TARGET,
+} from './cameraConfig.ts'
 
 // Lightformer panels of the environment. The map has no parallax, so a position is really a
 // direction from the machine. Metal shows only what it reflects: a direction no panel covers
@@ -70,7 +81,7 @@ function ProgressBridge() {
 // The model is in meters, so the camera sits about half a meter from the machine.
 export default function Scene() {
   return (
-    <Canvas camera={{ position: [0.35, 0.4, 0.55], fov: 40, near: 0.01, far: 20 }}>
+    <Canvas camera={{ position: [...REST_POSITION], fov: FOV, near: 0.01, far: 20 }}>
       <color attach="background" args={['#e8e2d6']} />
       <ambientLight intensity={0.1} />
       <directionalLight position={[0.5, 1, 0.8]} intensity={2} />
@@ -106,9 +117,21 @@ export default function Scene() {
           shadow too; the resolution is low because the blur hides the detail. */}
       {SHADOWS && <Shadow />}
       {SHOW_STATS && <StatsGl className="dev-stats" />}
-      {/* OrbitControls (from drei) lets you drag to rotate, scroll to zoom and
-          right-drag to pan the camera around a target point. */}
-      <OrbitControls makeDefault target={[0.05, 0.12, 0]} />
+      {/* OrbitControls (from drei) lets you drag to rotate and scroll to zoom the camera around
+          a target point. Panning is off and the polar, azimuth and distance ranges are limited,
+          so the camera stays above the floor, in front of the machine and at a useful range. */}
+      <OrbitControls
+        makeDefault
+        target={[...REST_TARGET]}
+        enablePan={false}
+        minPolarAngle={MIN_POLAR_ANGLE}
+        maxPolarAngle={MAX_POLAR_ANGLE}
+        minAzimuthAngle={-AZIMUTH_LIMIT}
+        maxAzimuthAngle={AZIMUTH_LIMIT}
+        minDistance={MIN_DISTANCE}
+        maxDistance={MAX_DISTANCE}
+        dampingFactor={DAMPING_FACTOR}
+      />
     </Canvas>
   )
 }

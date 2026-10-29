@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { useKeyboardInput } from './input/useKeyboardInput.ts'
 import DebugOverlay from './ui/DebugOverlay.tsx'
 import Loader from './ui/Loader.tsx'
+import ResetViewButton from './ui/ResetViewButton.tsx'
 
 // The 3D scene (three, drei, r3f, the model code) is a separate chunk, so the page and the loader
 // overlay paint before it arrives.
@@ -14,6 +15,7 @@ export default function App() {
       <Suspense fallback={null}>
         <Scene />
       </Suspense>
+      <ResetViewButton />
       <Loader />
       {import.meta.env.DEV && <DebugOverlay />}
     </>

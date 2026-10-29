@@ -65,3 +65,6 @@ export const LAMBDA_PUSH = 1 / 0.8
 export const LAMBDA_PULL = 1 / 1.2
 export const LAMBDA_GATE_OUT = 10
 export const LAMBDA_GATE_IN = 2
+
+/** The Reset view button eases the camera back to the resting view in this long (s). */
+export const RESET_DURATION = 0.8

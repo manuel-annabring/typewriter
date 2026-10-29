@@ -112,7 +112,7 @@ export default function Scene() {
       <ProgressBridge />
       <Suspense fallback={null}>
         <Typewriter />
-        {MOTION_ENABLED && <CameraRig />}
+        <CameraRig />
       </Suspense>
       {/* Ground shadow: ContactShadows renders the scene's depth from below the floor into a
           blurred, transparent texture on a plane at y = 0 (the machine sits on it), so the

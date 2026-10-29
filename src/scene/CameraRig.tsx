@@ -11,11 +11,13 @@ import {
   isTyping,
   lerpSpherical,
   setFromSpherical,
+  toSpherical,
   userGateTarget,
   type Spherical,
   type Vec3,
 } from '../lib/cameraPath.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
+import { useCameraUi } from '../ui/cameraUi.ts'
 import {
   FOLLOW_FACTOR,
   IDLE_DELAY,
@@ -30,10 +32,12 @@ import {
   LAMBDA_PUSH,
   MAX_DISTANCE,
   MIN_DISTANCE,
+  MOTION_ENABLED,
   PULL_BACK,
   PUSH_IN,
   REST_SPHERICAL,
   REST_TARGET,
+  RESET_DURATION,
   RESUME_DELAY,
   TYPING_WINDOW,
 } from './cameraConfig.ts'
@@ -67,6 +71,14 @@ interface Moves {
   appliedScale: number
 }
 
+/** The Reset view ease: from where the camera was (relative to the target) and where the target was. */
+interface Reset {
+  active: boolean
+  t: number
+  from: Spherical
+  fromTarget: Vec3
+}
+
 // The OrbitControls instance, which drei puts in the store as a plain EventDispatcher.
 interface Orbit extends EventDispatcher<{ start: object; end: object }> {
   target: Vector3
@@ -75,6 +87,7 @@ const isOrbit = (c: EventDispatcher | null): c is Orbit => c !== null && 'target
 
 const scratchS: Spherical = { radius: 0, elevation: 0, azimuth: 0 }
 const scratchV: Vec3 = { x: 0, y: 0, z: 0 }
+const scratchT: [number, number, number] = [0, 0, 0]
 const scratchOffset = new Vector3()
 // A long frame (shader compile after the model arrives) must not eat the flight.
 const MAX_DT = 1 / 20
@@ -101,12 +114,13 @@ function resetIntro(run: Intro) {
   Object.assign(run, { phase: 'waiting', t: 0, from: 0, duration: INTRO_DURATION, e: 0, fastForward: false })
 }
 
-// Drives the camera in two stages. First the intro flight along a fixed path; then, for good, the
-// event moves, which are offsets on top of the user's own orbit. Both only change the camera's
-// position (and the orbit target) before OrbitControls' own update at priority -1, which then aims
-// the camera, so OrbitControls never fights them and always starts from the pose they leave.
-// Mounted inside the same Suspense as the model, so it starts when loading is done. Typing is
-// never blocked.
+// Drives the camera in stages. First the intro flight along a fixed path; then, for good, the
+// event moves, which are offsets on top of the user's own orbit; and on request (Reset view) an
+// ease back to the resting view. All only change the camera's position (and the orbit target)
+// before OrbitControls' own update at priority -1, which then aims the camera, so OrbitControls
+// never fights them and always starts from the pose they leave. Mounted inside the same Suspense
+// as the model, so it starts when loading is done. Typing is never blocked. With reduced motion
+// the intro and the event moves are off and Reset view jumps instead of easing.
 export function CameraRig() {
   const get = useThree((s) => s.get)
   const intro = useRef<Intro>({ phase: 'waiting', t: 0, from: 0, duration: INTRO_DURATION, e: 0, fastForward: false })
@@ -122,6 +136,12 @@ export function CameraRig() {
     appliedX: 0,
     appliedScale: 1,
   })
+  const reset = useRef<Reset>({
+    active: false,
+    t: 0,
+    from: { radius: 0, elevation: 0, azimuth: 0 },
+    fromTarget: { x: 0, y: 0, z: 0 },
+  })
 
   useEffect(() => {
     const { camera, gl } = get()
@@ -129,7 +149,8 @@ export function CameraRig() {
     const fx = moves.current
     resetIntro(run)
     Object.assign(fx, { lastActivity: -Infinity, typedOnce: false, userDown: false, lastInput: -Infinity })
-    place(camera, 0)
+    if (MOTION_ENABLED) place(camera, 0)
+    else run.phase = 'done'
 
     // Pointer press or wheel: the user takes over. Before the flight has started they have seen
     // nothing move yet, so go straight to the resting view; mid-flight, stay where the camera is.
@@ -173,6 +194,7 @@ export function CameraRig() {
     const { camera, controls } = get()
     if (!isOrbit(controls)) return
     const fx = moves.current
+    const rs = reset.current
     Object.assign(fx, { follow: 0, push: 0, pull: 0, gate: 0, appliedX: 0, appliedScale: 1 })
 
     // OrbitControls fires start and end only for input it actually handles, so a click on a 3D key
@@ -180,6 +202,8 @@ export function CameraRig() {
     const onStart = () => {
       fx.userDown = true
       fx.lastInput = now()
+      rs.active = false
+      useCameraUi.getState().setOrbited(true)
     }
     const onEnd = () => {
       fx.userDown = false
@@ -187,9 +211,27 @@ export function CameraRig() {
     }
     controls.addEventListener('start', onStart)
     controls.addEventListener('end', onEnd)
+
+    // Reset view: ease from wherever the camera is, offsets included, to the resting view. The
+    // offsets are zeroed here because the captured pose already contains them; they fade back in
+    // RESUME_DELAY s after the ease ends.
+    const unsubscribe = useCameraUi.subscribe((state, prev) => {
+      if (state.resetSeq === prev.resetSeq) return
+      intro.current.phase = 'done'
+      const { target } = controls
+      Object.assign(rs.from, toSpherical([camera.position.x, camera.position.y, camera.position.z], [target.x, target.y, target.z]))
+      rs.fromTarget.x = target.x
+      rs.fromTarget.y = target.y
+      rs.fromTarget.z = target.z
+      rs.t = 0
+      rs.active = true
+      Object.assign(fx, { follow: 0, push: 0, pull: 0, gate: 0, appliedX: 0, appliedScale: 1, userDown: false })
+    })
     return () => {
       controls.removeEventListener('start', onStart)
       controls.removeEventListener('end', onEnd)
+      unsubscribe()
+      rs.active = false
       // Leave no offset behind for the next mount (hot reload) to inherit.
       shift(camera, controls.target, -fx.appliedX, 1 / fx.appliedScale)
       fx.appliedX = 0
@@ -216,6 +258,25 @@ export function CameraRig() {
 
     const { controls } = state
     if (!isOrbit(controls)) return
+    const rs = reset.current
+    if (rs.active) {
+      rs.t += dt
+      const e = MOTION_ENABLED && RESET_DURATION > 0 ? introEase(0, rs.t, RESET_DURATION) : 1
+      lerpSpherical(rs.from, REST_SPHERICAL, e, scratchS)
+      scratchT[0] = rs.fromTarget.x + (REST_TARGET[0] - rs.fromTarget.x) * e
+      scratchT[1] = rs.fromTarget.y + (REST_TARGET[1] - rs.fromTarget.y) * e
+      scratchT[2] = rs.fromTarget.z + (REST_TARGET[2] - rs.fromTarget.z) * e
+      setFromSpherical(scratchV, scratchT, scratchS)
+      state.camera.position.set(scratchV.x, scratchV.y, scratchV.z)
+      controls.target.set(scratchT[0], scratchT[1], scratchT[2])
+      if (e >= 1) {
+        rs.active = false
+        moves.current.lastInput = now()
+      }
+      return
+    }
+    if (!MOTION_ENABLED) return
+
     const fx = moves.current
     const t = now()
 

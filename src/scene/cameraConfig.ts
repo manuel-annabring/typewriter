@@ -56,7 +56,7 @@ export const RESET_DURATION = 0.8
 // The distance fits WRITING_COLUMNS character cells across the window, whatever its shape, within
 // the writing limits (which replace the overview limits while the mode is on; Reset view restores
 // them). Orbit and zoom still work there, pan stays off.
-export const WRITING_ELEVATION = 45 * DEG
+export const WRITING_ELEVATION = 20 * DEG
 /** Almost frontal: a little off the front so the machine keeps some depth. */
 export const WRITING_AZIMUTH = 3 * DEG
 export const WRITING_COLUMNS = 70

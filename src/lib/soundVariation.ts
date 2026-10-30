@@ -22,11 +22,11 @@ export const SOUND_SPECS: Readonly<Record<SoundId, SoundSpec>> = {
   thunk: { variants: 1, level: 0.6, pitch: 0.03, gainDb: 1.5 },
   bell: { variants: 1, level: 0.5, pitch: 0, gainDb: 0.75 },
   lock: { variants: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
-  return: { variants: 1, level: 0.8, pitch: 0, gainDb: 0 },
+  lever: { variants: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
+  zip: { variants: 1, level: 0.5, pitch: 0, gainDb: 0.5 },
+  stop: { variants: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
 }
 
-/** The bell rings this long after the clack that reached the bell column. */
-export const BELL_DELAY_S = 0.06
 export const MAX_VOICES = 24
 /** A stolen voice fades out over this long instead of cutting off with a click. */
 export const STEAL_FADE_S = 0.005

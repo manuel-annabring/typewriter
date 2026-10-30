@@ -49,14 +49,15 @@ describe('pressKey', () => {
   })
 
   it('plays the sounds the press made, including the lock clunk when ignored', () => {
+    const lastIds = () => (vi.mocked(playSounds).mock.lastCall?.[0] ?? []).map((c) => c.id)
     pressKey('Key_A')
-    expect(playSounds).toHaveBeenLastCalledWith(['clack'])
+    expect(lastIds()).toEqual(['clack'])
     useTypewriterStore.setState({ cursor: { row: 0, col: 66 }, status: 'locked' })
     pressKey('Key_A')
-    expect(playSounds).toHaveBeenLastCalledWith(['lock'])
+    expect(lastIds()).toEqual(['lock'])
     useTypewriterStore.setState({ cursor: { row: 0, col: 59 } })
     pressKey('Key_B')
-    expect(playSounds).toHaveBeenLastCalledWith(['clack', 'bell'])
+    expect(lastIds()).toEqual(['clack', 'bell'])
   })
 
   it('treats the lever like Enter: return the carriage and feed a line', () => {

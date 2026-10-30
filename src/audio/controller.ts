@@ -3,7 +3,7 @@
 // chunk afterwards, so the entry bundle carries none of the synthesis code. Until the engine is
 // ready, presses are held for a moment and then dropped; typing is never delayed.
 
-import type { SoundId } from '../lib/soundEvents.ts'
+import type { SoundCue } from '../lib/soundEvents.ts'
 import type { Engine } from './engine.ts'
 
 const GESTURES = ['pointerdown', 'pointerup', 'click', 'keydown', 'touchend'] as const
@@ -15,7 +15,7 @@ let ctx: AudioContext | null = null
 let engine: Engine | null = null
 let muted = false
 let armed = false
-let pending: { ids: readonly SoundId[]; at: number }[] = []
+let pending: { cues: readonly SoundCue[]; at: number }[] = []
 
 function unlock(): void {
   if (!ctx) {
@@ -48,7 +48,7 @@ async function load(c: AudioContext): Promise<void> {
     }
     engine = created
     const now = performance.now()
-    for (const p of pending) if (now - p.at <= PENDING_MAX_AGE_MS) created.play(p.ids)
+    for (const p of pending) if (now - p.at <= PENDING_MAX_AGE_MS) created.play(p.cues)
     pending = []
   } catch {
     // Blocked or unsupported audio stays silent.
@@ -82,10 +82,10 @@ export function armAudio(): () => void {
 }
 
 /** Plays the sounds a key press made (see `soundsFor`). A silent no-op until audio is unlocked. */
-export function playSounds(ids: readonly SoundId[]): void {
-  if (ids.length === 0) return
-  if (engine) engine.play(ids)
-  else if (ctx && pending.length < PENDING_MAX) pending.push({ ids, at: performance.now() })
+export function playSounds(cues: readonly SoundCue[]): void {
+  if (cues.length === 0) return
+  if (engine) engine.play(cues)
+  else if (ctx && pending.length < PENDING_MAX) pending.push({ cues, at: performance.now() })
 }
 
 export function setMuted(value: boolean): void {

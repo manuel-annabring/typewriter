@@ -5,6 +5,24 @@ import { cellOrigin, LINE_HEIGHT_MM, PITCH_MM, PX_PER_MM } from './paperGrid.ts'
 
 const M_PER_MM = 0.001
 
+/** Damping rate (MathUtils.damp, higher is faster) of the carriage's return stroke. The slide sound is timed by it. */
+export const LAMBDA_RETURN = 12
+
+/** Damping rate of the paper's line feed (`usePaperBend`). */
+export const LAMBDA_FEED = 14
+
+/** How long a one-line feed takes to get within a millimetre of its end; the return's stop sound waits for it. */
+export const LINE_FEED_SETTLE_S = Math.log(LINE_HEIGHT_MM / 1) / LAMBDA_FEED
+
+/**
+ * How long the return stroke takes to get within `restMm` of the end when it starts `cols`
+ * columns away. The slide is exponential (`x = d * e^(-LAMBDA_RETURN * t)`), so this is a log.
+ */
+export function returnSlideSeconds(cols: number, restMm = 1): number {
+  const distanceMm = cols * PITCH_MM
+  return distanceMm <= restMm ? 0 : Math.log(distanceMm / restMm) / LAMBDA_RETURN
+}
+
 /**
  * How far the carriage has slid left of its rest position with the cursor at `col`.
  * The half cell puts the middle of the cell, where its glyph is drawn, under the

@@ -1,12 +1,11 @@
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { MathUtils, type Object3D } from 'three'
-import { carriageShiftM } from '../lib/carriage.ts'
+import { carriageShiftM, LAMBDA_RETURN } from '../lib/carriage.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
-/** Damping rates for MathUtils.damp: higher is faster. */
+/** Damping rate for MathUtils.damp: higher is faster. The return stroke (LAMBDA_RETURN) is in lib/carriage.ts, where the sound is timed from it. */
 const LAMBDA_STEP = 30 // carriage moving left, one character at a time
-const LAMBDA_RETURN = 12 // carriage moving right: the return stroke (or backspace)
 const SETTLE_EPSILON = 5e-5 // 0.05 mm
 
 interface CarriageRig {

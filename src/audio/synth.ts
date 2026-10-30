@@ -143,16 +143,31 @@ function bell(ctx: BaseAudioContext): AudioBuffer {
   return v.noise({ at: 0, decay: 0.003, gain: 0.4, lowHz: 9000, highHz: 4000 }).toBuffer(ctx)
 }
 
-/** Lever clunk, a ratchet of ticks while the carriage slides, then the end stop. */
-function carriageReturn(ctx: BaseAudioContext): AudioBuffer {
-  const v = new Voice(0.8, ctx.sampleRate, 600)
-  v.tone({ at: 0, freq: 100, toFreq: 60, decay: 0.05, gain: 0.9 }).noise({ at: 0, decay: 0.02, gain: 0.6, lowHz: 1200 })
-  for (let t = 0.06; t < 0.5; t += 0.014) {
-    v.noise({ at: t, decay: 0.002, gain: 0.35, lowHz: 5000, highHz: 2000 })
+/** The lever going down: a heavy clunk. */
+function lever(ctx: BaseAudioContext): AudioBuffer {
+  return new Voice(0.2, ctx.sampleRate, 600)
+    .tone({ at: 0, freq: 100, toFreq: 60, decay: 0.05, gain: 0.9 })
+    .noise({ at: 0, decay: 0.02, gain: 0.6, lowHz: 1200 })
+    .toBuffer(ctx)
+}
+
+/** The carriage's ratchet while it slides: ticks that thin out and fade, like the slide slowing. */
+const ZIP_SECONDS = 0.4
+function zip(ctx: BaseAudioContext): AudioBuffer {
+  const v = new Voice(ZIP_SECONDS, ctx.sampleRate, 700)
+  let gap = 0.007
+  for (let t = 0; t < ZIP_SECONDS - 0.01; t += gap) {
+    v.noise({ at: t, decay: 0.002, gain: 0.1 + 0.4 * Math.exp(-t / 0.25), lowHz: 5000, highHz: 2000 })
+    gap *= 1.06
   }
-  return v
-    .tone({ at: 0.52, freq: 80, toFreq: 50, decay: 0.06, gain: 1 })
-    .noise({ at: 0.52, decay: 0.025, gain: 0.7, lowHz: 800 })
+  return v.toBuffer(ctx)
+}
+
+/** The carriage hitting its end stop. */
+function stop(ctx: BaseAudioContext): AudioBuffer {
+  return new Voice(0.2, ctx.sampleRate, 800)
+    .tone({ at: 0, freq: 80, toFreq: 50, decay: 0.06, gain: 1 })
+    .noise({ at: 0, decay: 0.025, gain: 0.7, lowHz: 800 })
     .toBuffer(ctx)
 }
 
@@ -168,8 +183,12 @@ function render(ctx: BaseAudioContext, id: SoundId, variant: number): AudioBuffe
       return lock(ctx)
     case 'bell':
       return bell(ctx)
-    case 'return':
-      return carriageReturn(ctx)
+    case 'lever':
+      return lever(ctx)
+    case 'zip':
+      return zip(ctx)
+    case 'stop':
+      return stop(ctx)
   }
 }
 

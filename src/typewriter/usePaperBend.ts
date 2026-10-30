@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { MathUtils, Vector3, type BufferGeometry, type Mesh, type MeshStandardMaterial, type Object3D } from 'three'
-import { paperFeedM } from '../lib/carriage.ts'
+import { LAMBDA_FEED, paperFeedM } from '../lib/carriage.ts'
 import {
   BEND_BEGIN_VERTEX,
   BEND_FRAGMENT_PARS,
@@ -13,8 +13,7 @@ import {
 } from '../lib/paperBend.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
-/** Damping rate for MathUtils.damp: higher is faster. */
-const LAMBDA_FEED = 14
+/** Damping rate for MathUtils.damp (higher is faster): LAMBDA_FEED, in lib/carriage.ts where the return sound is timed from it. */
 const SETTLE_EPSILON = 5e-5 // 0.05 mm
 const AXIS = new Vector3(1, 0, 0)
 /**

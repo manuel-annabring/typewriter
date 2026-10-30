@@ -1,9 +1,8 @@
 // The audio engine: decoded buffers in, one short-lived source node per hit, a master gain and a
 // limiter out. Kept apart from React. `controller.ts` loads this lazily after the first gesture.
 
-import type { SoundId } from '../lib/soundEvents.ts'
+import type { SoundCue, SoundId } from '../lib/soundEvents.ts'
 import {
-  BELL_DELAY_S,
   gainFor,
   MASTER_GAIN,
   MAX_VOICES,
@@ -15,13 +14,18 @@ import {
 } from '../lib/soundVariation.ts'
 import { synthesizeAll } from './synth.ts'
 
+/** How far a timed cue may be stretched (playback rate), and the fade at its cut-off. */
+const MIN_STRETCH = 0.8
+const MAX_STRETCH = 1.6
+const CUT_FADE_S = 0.02
+
 interface ActiveVoice {
   source: AudioBufferSourceNode
   gain: GainNode
 }
 
 export interface Engine {
-  play: (ids: readonly SoundId[]) => void
+  play: (cues: readonly SoundCue[]) => void
   setMuted: (muted: boolean) => void
   /** Sources started so far (for checks; you can't hear audio in a test browser). */
   readonly started: number
@@ -47,7 +51,7 @@ export function createEngine(ctx: AudioContext): Engine {
   let muted = false
   let started = 0
 
-  const startOne = (id: SoundId, delayS: number) => {
+  const startOne = ({ id, delayS, durationS }: SoundCue) => {
     const spec = SOUND_SPECS[id]
     const variant = pickVariant(spec.variants, lastVariant[id] ?? null, Math.random)
     lastVariant[id] = variant
@@ -56,7 +60,9 @@ export function createEngine(ctx: AudioContext): Engine {
 
     const source = ctx.createBufferSource()
     source.buffer = buffer
-    source.playbackRate.value = rateFor(spec.pitch, Math.random)
+    // A cue with a duration (the ratchet) is stretched to it, within reason, and cut off at its end.
+    const stretch = durationS === undefined ? 1 : Math.min(MAX_STRETCH, Math.max(MIN_STRETCH, buffer.duration / durationS))
+    source.playbackRate.value = rateFor(spec.pitch, Math.random) * stretch
     const gain = ctx.createGain()
     gain.gain.value = gainFor(spec.level, spec.gainDb, Math.random)
     source.connect(gain).connect(master)
@@ -74,14 +80,20 @@ export function createEngine(ctx: AudioContext): Engine {
       stolen.gain.gain.linearRampToValueAtTime(0, now + STEAL_FADE_S)
       stolen.source.stop(now + STEAL_FADE_S)
     }
-    source.start(now + delayS)
+    const at = now + delayS
+    source.start(at)
+    if (durationS !== undefined) {
+      gain.gain.setValueAtTime(gain.gain.value, Math.max(at, at + durationS - CUT_FADE_S))
+      gain.gain.linearRampToValueAtTime(0, at + durationS)
+      source.stop(at + durationS)
+    }
     started++
   }
 
   return {
-    play: (ids) => {
+    play: (cues) => {
       if (muted || ctx.state !== 'running') return
-      for (const id of ids) startOne(id, id === 'bell' ? BELL_DELAY_S : 0)
+      for (const cue of cues) startOne(cue)
     },
     setMuted: (value) => {
       muted = value

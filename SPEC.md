@@ -61,7 +61,14 @@ What NOT to trust:
 
 ### Phase 2: Extras (all wanted, built after Phase 1 works)
 
-- **Typewriter sound**: key clack, spacebar, bell, carriage return, lever. Audio starts only after the first user interaction (browser autoplay rules). Source and license TBD.
+- **Typewriter sound** (done with synthesized placeholders, 2026-10-30; real samples still to come): Web Audio API, no library. `pressKey` is the one trigger: it snapshots the store before and after the action and `soundsFor` (pure, `src/lib/soundEvents.ts`) turns that into timed cues, so a click on a 3D key sounds the same as the keyboard and ignored actions are audible.
+  - Sounds: `clack` (letters, digits, `,` `.`; 4 variants), `space` (2), `thunk` (Shift, Tab, Backspace and Enter's key; Tab and Shift do nothing else yet), `bell` (once at column 60, 60 ms after the clack that reached it), `lock` (a key ignored at column 66: a dull clunk), and the carriage return as `lever` (the 3D lever only; Enter plays `thunk`), `zip` (a ratchet as long as the slide) and `stop` (the end stop). Key down only, no release sound. Held keys do not repeat. A return from the first columns skips the ratchet (under 80 ms).
+  - Timing: the slide is exponential (`LAMBDA_RETURN`, `LAMBDA_FEED` in `src/lib/carriage.ts`), so the ratchet lasts until the remaining distance is 1 mm (`returnSlideSeconds`, about 0.4 s from column 60) and the stop comes at the later of that and the line feed (about 0.13 s).
+  - Variation: round-robin without repeating the last variant, plus random pitch (`playbackRate`, ±2 to 4 %) and gain (±1 to 1.5 dB) per hit; at most 24 voices (the oldest fades out in 5 ms); master gain 0.8 into a limiter (fast compressor). All numbers are in `SOUND_SPECS` and neighbours in `src/lib/soundVariation.ts`.
+  - Unlock: an `AudioContext` is created and resumed inside the first pointer or key gesture (autoplay rules, iOS Safari); the engine (`src/audio/engine.ts`, buffers, voices, limiter) is a lazy chunk loaded after that. A press that arrives while it loads is held for up to 300 ms and then dropped; typing is never delayed. Blocked or unsupported audio is a silent no-op with no console output.
+  - Sources: for now `src/audio/synth.ts` renders every buffer in code (noise bursts, filtered clicks, sine partials for the bell; no files, no licence). Real samples replace it by decoding mp3 into the same `AudioBuffer`s (see section 10).
+  - UI: a "Sound on / Sound off" button, bottom left (`SoundToggle`, state in `src/ui/soundUi.ts`). On by default once a gesture has happened. The mute choice is kept in `localStorage` (`typewriter:muted`; storage access is wrapped, the page works without it). No volume control, no hint.
+  - Not yet: the new-sheet sound (comes with the new-sheet slice).
 - **Camera** (done, 2026-10-29): free orbit inside limits, an intro flight, a writing view and a reset button. Constants live in `src/scene/cameraConfig.ts`; the maths is in `src/lib/cameraPath.ts`, the behavior in `src/scene/CameraRig.tsx`.
   - Limits: no pan (the machine is always the target), elevation 8° to 61°, azimuth ±70° round the front, distance 0.30 to 1.50 m, damping 0.08. The resting view is 0.69 m from the target at azimuth 28.6° and elevation 24.1°.
   - Intro: starts 2x as far away, 45° up and swung 40° to the left, eases out into the resting view in 2.5 s, 0.4 s after mount (the loader fade). A pointer press or the wheel stops it where it is; a key press fast-forwards it in 0.4 s; typing is never blocked. Reduced motion skips it.
@@ -107,7 +114,7 @@ The code finds and animates parts by name, so the names and rules below are fixe
 - Origins at pivot points (keys at the center, lever at the hinge, `Carriage` at its rest position at the start of a line).
 - Materials named: `Mat_Body`, `Mat_KeyCream`, `Mat_KeyDark`, `Mat_Wood`, `Mat_Platen`, `Mat_Metal`, `Mat_Paper`, `Mat_Interior` (amendment, slice 6c cavity: the dark matte inside of the keyboard well, used by `Body`'s second material slot).
 - `Body` therefore has two material slots (`Mat_Body`, `Mat_Interior`) and exports as a group named `Body` with child meshes `Body_1` and `Body_2`; `StrikePoint` stays its child.
-- Budgets (measured 2026-10-29 on an M1 Pro MacBook Pro, confirmed): GLB under 1.5 MB (now 917 kB, 89 kB brotli); model under 100k triangles (now 36k; the ground-shadow depth pass renders them again while something moves); main pass about 100 draw calls (now 99); 60 fps at devicePixelRatio 2 while typing and during the carriage return (met, vsync-capped); entry JS under 300 kB (now 227 kB, 72 kB gzip), the 3D scene is a separate lazy chunk (1.08 MB, 294 kB gzip).
+- Budgets (measured 2026-10-29 on an M1 Pro MacBook Pro, confirmed): GLB under 1.5 MB (now 917 kB, 89 kB brotli); model under 100k triangles (now 36k; the ground-shadow depth pass renders them again while something moves); main pass about 100 draw calls (now 99); 60 fps at devicePixelRatio 2 while typing and during the carriage return (met, vsync-capped); entry JS under 300 kB (now 232 kB, 74 kB gzip), the 3D scene is a separate lazy chunk (1.08 MB, 294 kB gzip); sound adds a lazy engine chunk of 5 kB and, once real samples exist, about 12 mono mp3 files under `public/audio/` with 150 kB in total at most, fetched after the first gesture.
 - Before each export, run a contract check (names present, transforms applied, origins sensible).
 
 ### Key label atlas (amendment, slice 6d)
@@ -164,12 +171,12 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
    - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
    - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
-7. Phase 2 slices, one at a time: sound, ~~intro camera~~ (done, camera: limits, intro, reset), new sheet, save or share, mobile.
+7. Phase 2 slices, one at a time: ~~sound~~ (done with placeholders; real samples to come), ~~intro camera~~ (done, camera: limits, intro, reset), new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.
 
 ## 8. Definition of done (Phase 1)
 
-Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset) is built too. Next: sound, new sheet, save or share, mobile.
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound (synthesized placeholders) are built too. Next: new sheet, save or share, mobile; real sound samples whenever Manuel wants them.
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.
@@ -189,7 +196,7 @@ Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: th
 - Tab key and Shift: does shift change the printed character, and what do the key caps show?
 - Lines and characters per page (the paper format is decided: A4).
 - ~~Camera: orbit limits, or a fixed view?~~ Decided 2026-10-29: free orbit inside limits (no pan, elevation 8° to 61°, azimuth ±70° round the front, 0.30 to 1.50 m).
-- Is the page content kept between visits (localStorage)?
+- Is the page content kept between visits (localStorage)? (Only the sound mute choice is kept so far; see the sound entry in section 4.)
 - Hosting and domain.
-- Sound source: record yourself or use licensed samples?
+- ~~Sound source~~ Decided 2026-10-30: build and tune everything on synthesized placeholders first. Real samples (CC0 or licensed, each download approved with its licence, or recorded by Manuel) come later as mp3 in `public/audio/` with licence files next to them, like the fonts; the engine only sees `AudioBuffer`s, so this is a loader change.
 - Project title and any on-screen hint text.

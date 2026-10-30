@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { playSounds } from '../audio/controller.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 import { holdKey, pressKey } from './dispatchKey.ts'
+
+vi.mock('../audio/controller.ts', () => ({ playSounds: vi.fn() }))
 
 const pressed = () => useTypewriterStore.getState().pressedKeys
 
@@ -43,6 +46,17 @@ describe('holdKey', () => {
 describe('pressKey', () => {
   beforeEach(() => {
     useTypewriterStore.setState({ pressedKeys: [], cursor: { row: 0, col: 4 }, status: 'typing' })
+  })
+
+  it('plays the sounds the press made, including the lock clunk when ignored', () => {
+    pressKey('Key_A')
+    expect(playSounds).toHaveBeenLastCalledWith(['clack'])
+    useTypewriterStore.setState({ cursor: { row: 0, col: 66 }, status: 'locked' })
+    pressKey('Key_A')
+    expect(playSounds).toHaveBeenLastCalledWith(['lock'])
+    useTypewriterStore.setState({ cursor: { row: 0, col: 59 } })
+    pressKey('Key_B')
+    expect(playSounds).toHaveBeenLastCalledWith(['clack', 'bell'])
   })
 
   it('treats the lever like Enter: return the carriage and feed a line', () => {

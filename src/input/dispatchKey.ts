@@ -1,10 +1,18 @@
+import { playSounds } from '../audio/controller.ts'
 import { charFromKeyName } from '../lib/keymap.ts'
+import { soundsFor } from '../lib/soundEvents.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
 /** The one place a key name becomes a store action. Keyboard and pointer both call this. */
 export function pressKey(name: string): void {
   const s = useTypewriterStore.getState()
   s.keyDown(name)
+  runAction(name, s)
+  // `s` is the state from before the action (the store replaces its state object on each set).
+  playSounds(soundsFor(name, s, useTypewriterStore.getState()))
+}
+
+function runAction(name: string, s: ReturnType<typeof useTypewriterStore.getState>): void {
   switch (name) {
     case 'Key_Space':
       s.space()

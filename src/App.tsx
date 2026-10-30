@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react'
+import { useAudioUnlock } from './audio/useAudioUnlock.ts'
 import { useKeyboardInput } from './input/useKeyboardInput.ts'
 import DebugOverlay from './ui/DebugOverlay.tsx'
 import Loader from './ui/Loader.tsx'
@@ -11,6 +12,7 @@ const Scene = lazy(() => import('./scene/Scene.tsx'))
 
 export default function App() {
   useKeyboardInput()
+  useAudioUnlock()
   return (
     <>
       <Suspense fallback={null}>

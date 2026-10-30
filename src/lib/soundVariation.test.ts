@@ -5,6 +5,7 @@ import {
   jitter,
   pickVariant,
   rateFor,
+  SAMPLE_FILES,
   SOUND_SPECS,
   VoicePool,
   type Random,
@@ -73,12 +74,20 @@ describe('jitter and gain', () => {
 })
 
 describe('SOUND_SPECS', () => {
-  it('has at least one variant and a level in (0, 1] for every sound', () => {
+  it('has at least one clip, a positive rate and a level in (0, 1] for every sound', () => {
     for (const spec of Object.values(SOUND_SPECS)) {
-      expect(spec.variants).toBeGreaterThanOrEqual(1)
+      expect(spec.files.length).toBeGreaterThanOrEqual(1)
+      expect(spec.rate).toBeGreaterThan(0)
       expect(spec.level).toBeGreaterThan(0)
       expect(spec.level).toBeLessThanOrEqual(1)
     }
+  })
+})
+
+describe('SAMPLE_FILES', () => {
+  it('lists each clip once, including the ones several sounds share', () => {
+    expect(new Set(SAMPLE_FILES).size).toBe(SAMPLE_FILES.length)
+    expect(SAMPLE_FILES).toEqual(expect.arrayContaining(['key_1', 'key_2', 'space_1', 'bell', 'return_slide', 'return_stop']))
   })
 })
 

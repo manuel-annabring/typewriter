@@ -8,11 +8,11 @@ import {
   MAX_VOICES,
   pickVariant,
   rateFor,
+  SAMPLE_FILES,
   SOUND_SPECS,
   STEAL_FADE_S,
   VoicePool,
 } from '../lib/soundVariation.ts'
-import { synthesizeAll } from './synth.ts'
 
 /** How far a timed cue may be stretched (playback rate), and the fade at its cut-off. */
 const MIN_STRETCH = 0.8
@@ -32,8 +32,30 @@ export interface Engine {
   dispose: () => void
 }
 
-export function createEngine(ctx: AudioContext): Engine {
-  const buffers = synthesizeAll(ctx)
+/** Decodes each fetched clip once and lists, per sound, the buffers of its clips. A clip that fails to decode is left out (its sound is then silent). */
+async function decodeAll(ctx: AudioContext, files: Readonly<Record<string, ArrayBuffer>>): Promise<Record<SoundId, AudioBuffer[]>> {
+  const decoded = new Map<string, AudioBuffer>()
+  await Promise.all(
+    SAMPLE_FILES.map(async (name) => {
+      const bytes = files[name]
+      if (!bytes) return
+      try {
+        decoded.set(name, await ctx.decodeAudioData(bytes))
+      } catch {
+        // A broken clip only silences the sounds that use it.
+      }
+    }),
+  )
+  const buffers = {} as Record<SoundId, AudioBuffer[]>
+  for (const id of Object.keys(SOUND_SPECS) as SoundId[]) {
+    buffers[id] = SOUND_SPECS[id].files.flatMap((name) => decoded.get(name) ?? [])
+  }
+  return buffers
+}
+
+/** `files` are the fetched mp3 bytes by clip name (see `SAMPLE_FILES`). */
+export async function createEngine(ctx: AudioContext, files: Readonly<Record<string, ArrayBuffer>>): Promise<Engine> {
+  const buffers = await decodeAll(ctx, files)
 
   const master = ctx.createGain()
   master.gain.value = MASTER_GAIN
@@ -53,16 +75,17 @@ export function createEngine(ctx: AudioContext): Engine {
 
   const startOne = ({ id, delayS, durationS }: SoundCue) => {
     const spec = SOUND_SPECS[id]
-    const variant = pickVariant(spec.variants, lastVariant[id] ?? null, Math.random)
+    const clips = buffers[id]
+    const variant = pickVariant(clips.length, lastVariant[id] ?? null, Math.random)
     lastVariant[id] = variant
-    const buffer = buffers[id][variant]
+    const buffer = clips[variant]
     if (!buffer) return
 
     const source = ctx.createBufferSource()
     source.buffer = buffer
     // A cue with a duration (the ratchet) is stretched to it, within reason, and cut off at its end.
     const stretch = durationS === undefined ? 1 : Math.min(MAX_STRETCH, Math.max(MIN_STRETCH, buffer.duration / durationS))
-    source.playbackRate.value = rateFor(spec.pitch, Math.random) * stretch
+    source.playbackRate.value = spec.rate * rateFor(spec.pitch, Math.random) * stretch
     const gain = ctx.createGain()
     gain.gain.value = gainFor(spec.level, spec.gainDb, Math.random)
     source.connect(gain).connect(master)

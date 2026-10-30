@@ -6,8 +6,10 @@ import type { SoundId } from './soundEvents.ts'
 export type Random = () => number
 
 export interface SoundSpec {
-  /** Number of variants the synth or the files provide; played round-robin. */
-  variants: number
+  /** Clips in `public/audio/` (names without `.mp3`), played round-robin as variants. */
+  files: readonly string[]
+  /** Base playback rate: below 1 plays the clip lower and slower (how Shift, Tab, the lock and the lever reuse the key clips). */
+  rate: number
   /** Base level before the master gain (linear). */
   level: number
   /** Random pitch spread as a fraction of the playback rate (0.04 = ±4 %). */
@@ -16,16 +18,21 @@ export interface SoundSpec {
   gainDb: number
 }
 
+const KEYS = ['key_1', 'key_2'] as const
+
 export const SOUND_SPECS: Readonly<Record<SoundId, SoundSpec>> = {
-  clack: { variants: 4, level: 0.8, pitch: 0.04, gainDb: 1.5 },
-  space: { variants: 2, level: 0.8, pitch: 0.03, gainDb: 1.5 },
-  thunk: { variants: 1, level: 0.6, pitch: 0.03, gainDb: 1.5 },
-  bell: { variants: 1, level: 0.5, pitch: 0, gainDb: 0.75 },
-  lock: { variants: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
-  lever: { variants: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
-  zip: { variants: 1, level: 0.5, pitch: 0, gainDb: 0.5 },
-  stop: { variants: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
+  clack: { files: KEYS, rate: 1, level: 0.8, pitch: 0.04, gainDb: 1.5 },
+  space: { files: ['space_1'], rate: 1, level: 0.8, pitch: 0.03, gainDb: 1.5 },
+  thunk: { files: KEYS, rate: 0.8, level: 0.6, pitch: 0.03, gainDb: 1.5 },
+  bell: { files: ['bell'], rate: 1, level: 0.5, pitch: 0, gainDb: 0.75 },
+  lock: { files: KEYS, rate: 0.55, level: 0.8, pitch: 0.02, gainDb: 1 },
+  lever: { files: ['key_2'], rate: 0.5, level: 0.8, pitch: 0.02, gainDb: 1 },
+  zip: { files: ['return_slide'], rate: 1, level: 0.5, pitch: 0, gainDb: 0.5 },
+  stop: { files: ['return_stop'], rate: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
 }
+
+/** Every clip the sounds use, once each (the key clips serve several sounds). */
+export const SAMPLE_FILES: readonly string[] = [...new Set(Object.values(SOUND_SPECS).flatMap((spec) => spec.files))]
 
 export const MAX_VOICES = 24
 /** A stolen voice fades out over this long instead of cutting off with a click. */

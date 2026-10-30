@@ -43,28 +43,8 @@ export const INTRO_DURATION = 2.5
 /** The loader overlay fades out over 0.4 s once loading is done (ui/Loader). */
 export const INTRO_DELAY = 0.4
 export const INTRO_FAST_FORWARD = 0.4
-/** Reduced motion turns off all camera motion (the intro and the event moves): the camera starts at the resting view. */
+/** Reduced motion turns off the intro (the camera starts at the resting view) and makes Reset view jump. */
 export const MOTION_ENABLED = typeof window === 'undefined' || !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-// Event moves (picked in the timeline widget): small offsets on top of the user's own orbit. The
-// look-at point follows the carriage, the camera pushes in while typing and pulls back when idle.
-// All fade out while the user orbits or zooms and come back RESUME_DELAY s after the last input.
-/** Share of the carriage's travel (since column 0) the look-at point follows. */
-export const FOLLOW_FACTOR = 0.4
-/** Distance shrinks by this share while typing and grows by PULL_BACK when idle. */
-export const PUSH_IN = 0.08
-export const PULL_BACK = 0.1
-/** Typing counts as active for this long after a keystroke (s). */
-export const TYPING_WINDOW = 1.2
-/** Idle for this long after typing triggers the pull-back (s). */
-export const IDLE_DELAY = 4
-export const RESUME_DELAY = 2
-// Rates for damp() (per second), the reciprocal of each move's time constant.
-export const LAMBDA_FOLLOW = 1 / 0.5
-export const LAMBDA_PUSH = 1 / 0.8
-export const LAMBDA_PULL = 1 / 1.2
-export const LAMBDA_GATE_OUT = 10
-export const LAMBDA_GATE_IN = 2
 
 /** The Reset view button eases the camera back to the resting view in this long (s). */
 export const RESET_DURATION = 0.8

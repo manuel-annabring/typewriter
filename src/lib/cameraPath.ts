@@ -1,5 +1,3 @@
-import { carriageShiftM } from './carriage.ts'
-
 // Pure camera maths (no three.js): positions as spherical coordinates round the orbit target, and
 // the timing of the intro flight. Azimuth 0 is the front (+z, keyboard side) and grows toward +x;
 // elevation is the angle above the horizontal. This is also OrbitControls' own convention.
@@ -55,45 +53,4 @@ export function lerpSpherical(a: Spherical, b: Spherical, e: number, out: Spheri
  */
 export function introEase(from: number, t: number, duration: number): number {
   return from + (1 - from) * easeOutCubic(clamp01(t / duration))
-}
-
-// Event moves: small offsets on top of whatever the user's orbit has set up (see CameraRig).
-
-/** Frame-rate independent ease of `current` toward `target`; `lambda` is a rate per second. */
-export function damp(current: number, target: number, lambda: number, dt: number): number {
-  return current + (target - current) * (1 - Math.exp(-lambda * dt))
-}
-
-/** How far (m, along x) the look-at point follows the carriage: `factor` of its travel since column 0. */
-export function followOffsetM(col: number, factor: number): number {
-  return -factor * (carriageShiftM(col) - carriageShiftM(0))
-}
-
-/** True while a character was printed less than `window` seconds ago. */
-export function isTyping(now: number, lastActivity: number, window: number): boolean {
-  return now - lastActivity < window
-}
-
-/** True once something was typed and then nothing for more than `delay` seconds. */
-export function isIdleAfterTyping(typedOnce: boolean, now: number, lastActivity: number, delay: number): boolean {
-  return typedOnce && now - lastActivity > delay
-}
-
-/** 1 when the event moves may act, 0 while the user is orbiting or for `resumeDelay` s after. */
-export function userGateTarget(userDown: boolean, now: number, lastInput: number, resumeDelay: number): number {
-  return userDown || now - lastInput < resumeDelay ? 0 : 1
-}
-
-/** Camera distance factor: push in while typing, pull back when idle, all scaled by the gate. */
-export function distanceScale(push: number, pull: number, gate: number, pushIn: number, pullBack: number): number {
-  return 1 + gate * (pullBack * pull - pushIn * push)
-}
-
-/**
- * Limits a distance factor so the camera, at `base` (the user's own distance) times the factor,
- * stays within [min, max]. OrbitControls would clamp it anyway, but then undoing the factor later
- * would not return to the user's distance.
- */
-export function clampScale(scale: number, base: number, min: number, max: number): number {
-  return Math.min(max / base, Math.max(min / base, scale))
 }

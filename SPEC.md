@@ -62,10 +62,10 @@ What NOT to trust:
 ### Phase 2: Extras (all wanted, built after Phase 1 works)
 
 - **Typewriter sound**: key clack, spacebar, bell, carriage return, lever. Audio starts only after the first user interaction (browser autoplay rules). Source and license TBD.
-- **Camera** (done, 2026-10-29): free orbit inside limits, an intro flight, small event moves and a reset button. Constants live in `src/scene/cameraConfig.ts`; the maths is in `src/lib/cameraPath.ts`, the behavior in `src/scene/CameraRig.tsx`.
+- **Camera** (done, 2026-10-29): free orbit inside limits, an intro flight and a reset button. Constants live in `src/scene/cameraConfig.ts`; the maths is in `src/lib/cameraPath.ts`, the behavior in `src/scene/CameraRig.tsx`.
   - Limits: no pan (the machine is always the target), elevation 8° to 61°, azimuth ±70° round the front, distance 0.30 to 1.50 m, damping 0.08. The resting view is 0.69 m from the target at azimuth 28.6° and elevation 24.1°.
   - Intro: starts 2x as far away, 45° up and swung 40° to the left, eases out into the resting view in 2.5 s, 0.4 s after mount (the loader fade). A pointer press or the wheel stops it where it is; a key press fast-forwards it in 0.4 s; typing is never blocked. Reduced motion skips it.
-  - Event moves: offsets on top of the user's own orbit. The look-at point follows the carriage (40% of its travel), the camera pushes in 8% while typing and pulls back 10% after 4 s idle. They fade out while the user orbits and return 2 s after the last input. Reduced motion turns them off.
+  - Dropped (2026-10-30): event moves (follow the carriage, push in while typing, pull back when idle). They were built and removed again because the result did not feel right (git history: `30eae81`). If camera moves tied to typing are wanted later, start from a fresh discussion.
   - Reset view: a button (bottom right) offered only after the user has orbited or zoomed; it eases back to the resting view in 0.8 s.
   - Still open: portrait and small windows (belongs to the mobile slice; the constants are in one module so the distance can scale with the aspect ratio).
 - **Paper feed and new sheet**: pull the finished page out and insert a fresh one.
@@ -163,12 +163,12 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
    - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
    - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
-7. Phase 2 slices, one at a time: sound, ~~intro camera~~ (done, camera: limits, intro, event moves, reset), new sheet, save or share, mobile.
+7. Phase 2 slices, one at a time: sound, ~~intro camera~~ (done, camera: limits, intro, reset), new sheet, save or share, mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.
 
 ## 8. Definition of done (Phase 1)
 
-Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, event moves, reset) is built too. Next: sound, new sheet, save or share, mobile.
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset) is built too. Next: sound, new sheet, save or share, mobile.
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.

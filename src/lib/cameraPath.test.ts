@@ -9,9 +9,16 @@ import {
   REST_POSITION,
   REST_SPHERICAL,
   REST_TARGET,
+  OVERVIEW_LIMITS,
+  WRITING_AZIMUTH,
+  WRITING_COLUMNS,
+  WRITING_ELEVATION,
+  WRITING_LIMITS,
+  writingDistance,
 } from '../scene/cameraConfig.ts'
 import {
   easeOutCubic,
+  fitDistance,
   introEase,
   lerpSpherical,
   setFromSpherical,
@@ -103,5 +110,38 @@ describe('camera config', () => {
     expect(INTRO_START_SPHERICAL.radius).toBeCloseTo(REST_SPHERICAL.radius * 2, 9)
     expect(deg(INTRO_START_SPHERICAL.elevation)).toBeCloseTo(45, 9)
     expect(deg(INTRO_START_SPHERICAL.azimuth)).toBeCloseTo(deg(REST_SPHERICAL.azimuth) - 40, 9)
+  })
+})
+
+describe('writing view', () => {
+  it('fits the given number of columns across the view', () => {
+    // 70 columns of 2.54 mm in a 16:10 window with a 40 degree vertical field of view.
+    const d = fitDistance(70, 0.00254, 40, 1.6)
+    expect(d).toBeCloseTo(0.1527, 3)
+    // The visible width at that distance is the 70 columns.
+    expect(2 * d * Math.tan((20 * Math.PI) / 180) * 1.6).toBeCloseTo(0.1778, 6)
+  })
+
+  it('moves farther away in narrower windows and closer in wider ones', () => {
+    expect(fitDistance(70, 0.00254, 40, 1.33)).toBeGreaterThan(fitDistance(70, 0.00254, 40, 1.6))
+    expect(fitDistance(70, 0.00254, 40, 1.78)).toBeLessThan(fitDistance(70, 0.00254, 40, 1.6))
+  })
+
+  it('stays inside the writing limits for any window shape', () => {
+    for (const aspect of [0.4, 0.75, 1, 1.33, 1.6, 1.78, 2.4, 4]) {
+      const d = writingDistance(aspect)
+      expect(d).toBeGreaterThanOrEqual(WRITING_LIMITS.min)
+      expect(d).toBeLessThanOrEqual(WRITING_LIMITS.max)
+    }
+    expect(writingDistance(1.6)).toBeCloseTo(0.1527, 3)
+  })
+
+  it('lets the writing view go closer than the overview allows, and keeps its angles in range', () => {
+    expect(WRITING_LIMITS.min).toBeLessThan(OVERVIEW_LIMITS.min)
+    expect(WRITING_LIMITS.max).toBeLessThan(OVERVIEW_LIMITS.max)
+    expect(WRITING_ELEVATION).toBeGreaterThanOrEqual(MIN_ELEVATION)
+    expect(WRITING_ELEVATION).toBeLessThanOrEqual(MAX_ELEVATION)
+    expect(Math.abs(WRITING_AZIMUTH)).toBeLessThanOrEqual(AZIMUTH_LIMIT)
+    expect(WRITING_COLUMNS).toBeGreaterThan(66)
   })
 })

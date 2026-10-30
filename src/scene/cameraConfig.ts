@@ -2,7 +2,8 @@
 // 2026-10-29; the SPEC open question "orbit limits or a fixed view" is answered by a limited,
 // front-facing orbit: no pan, no view from below the floor or round the back.
 
-import { setFromSpherical, toSpherical, type Spherical, type Vec3 } from '../lib/cameraPath.ts'
+import { fitDistance, setFromSpherical, toSpherical, type Spherical, type Vec3 } from '../lib/cameraPath.ts'
+import { PITCH_MM } from '../lib/paperGrid.ts'
 
 const DEG = Math.PI / 180
 
@@ -48,3 +49,30 @@ export const MOTION_ENABLED = typeof window === 'undefined' || !window.matchMedi
 
 /** The Reset view button eases the camera back to the resting view in this long (s). */
 export const RESET_DURATION = 0.8
+
+// Writing view (decided 2026-10-30): a click on the carriage, or the Writing view button, flies the
+// camera to the strike point so the typed line is easy to read. The typed text lies left of the
+// strike point (the paper slides left under it), so the strike point itself is the look-at point.
+// The distance fits WRITING_COLUMNS character cells across the window, whatever its shape, within
+// the writing limits (which replace the overview limits while the mode is on; Reset view restores
+// them). Orbit and zoom still work there, pan stays off.
+export const WRITING_ELEVATION = 45 * DEG
+/** Almost frontal: a little off the front so the machine keeps some depth. */
+export const WRITING_AZIMUTH = 3 * DEG
+export const WRITING_COLUMNS = 70
+export const WRITING_DURATION = 1
+export const WRITING_MIN_DISTANCE = 0.08
+export const WRITING_MAX_DISTANCE = 0.4
+
+export interface DistanceLimits {
+  min: number
+  max: number
+}
+export const OVERVIEW_LIMITS: DistanceLimits = { min: MIN_DISTANCE, max: MAX_DISTANCE }
+export const WRITING_LIMITS: DistanceLimits = { min: WRITING_MIN_DISTANCE, max: WRITING_MAX_DISTANCE }
+
+/** Distance of the writing view for a window of `aspect` (width / height). */
+export function writingDistance(aspect: number): number {
+  const fit = fitDistance(WRITING_COLUMNS, PITCH_MM / 1000, FOV, aspect)
+  return Math.min(WRITING_MAX_DISTANCE, Math.max(WRITING_MIN_DISTANCE, fit))
+}

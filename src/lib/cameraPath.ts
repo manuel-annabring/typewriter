@@ -54,3 +54,13 @@ export function lerpSpherical(a: Spherical, b: Spherical, e: number, out: Spheri
 export function introEase(from: number, t: number, duration: number): number {
   return from + (1 - from) * easeOutCubic(clamp01(t / duration))
 }
+
+/**
+ * Camera distance at which `columns` character cells of `pitchM` meters span the full view width,
+ * for a vertical field of view of `fovDeg` degrees and a window of `aspect` (width / height).
+ * The sheet is treated as flat and square to the view.
+ */
+export function fitDistance(columns: number, pitchM: number, fovDeg: number, aspect: number): number {
+  const visibleHeightPerMeter = 2 * Math.tan((fovDeg * Math.PI) / 360)
+  return (columns * pitchM) / (visibleHeightPerMeter * aspect)
+}

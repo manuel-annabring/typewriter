@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { BUTTON_STYLE } from './buttonStyle.ts'
 import { useCameraUi } from './cameraUi.ts'
 
 // Matches the loader's palette. The fade-in is skipped with reduced motion.
@@ -18,16 +19,7 @@ function ViewButton({ onClick, children }: { onClick: () => void; children: Reac
         // Keep focus off the button so Space and Enter go on typing, not on pressing it again.
         e.currentTarget.blur()
       }}
-      style={{
-        padding: '8px 12px',
-        font: '12px/1 ui-monospace, Menlo, monospace',
-        letterSpacing: '0.08em',
-        color: '#4a5046',
-        background: 'rgba(232, 226, 214, 0.85)',
-        border: '1px solid rgba(74, 80, 70, 0.35)',
-        borderRadius: 6,
-        cursor: 'pointer',
-      }}
+      style={BUTTON_STYLE}
     >
       {children}
     </button>

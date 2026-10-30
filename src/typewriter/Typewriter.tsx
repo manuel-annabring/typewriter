@@ -2,6 +2,7 @@ import { useThree, type ThreeElements, type ThreeEvent } from '@react-three/fibe
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import type { Group, Object3D } from 'three'
 import { holdKey } from '../input/dispatchKey.ts'
+import { useCameraUi } from '../ui/cameraUi.ts'
 import { assertModelContract, KEY_NODE_NAMES } from './contract.ts'
 import { Model } from './TypewriterModel.generated.tsx'
 import { useCarriageAnimation } from './useCarriageAnimation.ts'
@@ -22,6 +23,22 @@ function pressableOf(object: Object3D): string | null {
   return null
 }
 
+/**
+ * True for a hit on the carriage (paper, platen, holder, table, knobs) that is not pressable. A
+ * click on it sends the camera to the writing view. The Lever is a child of Carriage but pressable
+ * (it returns the carriage), so it never counts.
+ */
+function focusableOf(object: Object3D): boolean {
+  if (pressableOf(object)) return false
+  for (let o: Object3D | null = object; o; o = o.parent) {
+    if (o.name === 'Carriage') return true
+  }
+  return false
+}
+
+// A click that moved more than this (screen pixels) was an orbit drag, not a click.
+const CLICK_MAX_MOVE_PX = 5
+
 // Behavior lives here, not in the generated file, so regenerating the model
 // from Blender never overwrites it. r3f pointer events bubble up the scene
 // graph, so one handler on a wrapper group covers every key mesh.
@@ -40,7 +57,7 @@ export function Typewriter(props: ThreeElements['group']) {
 
   const get = useThree((state) => state.get)
   const setCursor = useCallback(
-    (value: '' | 'pointer') => {
+    (value: '' | 'pointer' | 'zoom-in') => {
       get().gl.domElement.style.cursor = value
     },
     [get],
@@ -95,21 +112,36 @@ export function Typewriter(props: ThreeElements['group']) {
   const showCursor = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation()
-      setCursor(pressableOf(e.object) ? 'pointer' : '')
+      // zoom-in only while the click would do something: in the writing view it does nothing.
+      const zoomable = focusableOf(e.object) && useCameraUi.getState().mode === 'overview'
+      setCursor(pressableOf(e.object) ? 'pointer' : zoomable ? 'zoom-in' : '')
+    },
+    [setCursor],
+  )
+
+  const onClick = useCallback(
+    (e: ThreeEvent<MouseEvent>) => {
+      // Same blanket stop as on pointer down: raycasts don't occlude, so whatever is behind the
+      // first hit must not react either.
+      e.stopPropagation()
+      if (e.delta > CLICK_MAX_MOVE_PX || !focusableOf(e.object)) return
+      if (useCameraUi.getState().mode !== 'overview') return
+      useCameraUi.getState().requestWriting()
+      setCursor('')
     },
     [setCursor],
   )
 
   const onPointerOut = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
-      if (pressableOf(e.object)) setCursor('')
+      if (pressableOf(e.object) || focusableOf(e.object)) setCursor('')
     },
     [setCursor],
   )
 
   return (
     <group ref={root} {...props}>
-      <group onPointerDown={onPointerDown} onPointerOver={showCursor} onPointerMove={showCursor} onPointerOut={onPointerOut}>
+      <group onPointerDown={onPointerDown} onPointerOver={showCursor} onPointerMove={showCursor} onPointerOut={onPointerOut} onClick={onClick}>
         <Model />
       </group>
     </group>

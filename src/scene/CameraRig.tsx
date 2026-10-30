@@ -45,7 +45,7 @@ interface Fly {
 }
 
 // The OrbitControls instance, which drei puts in the store as a plain EventDispatcher.
-interface Orbit extends EventDispatcher<{ start: object; end: object }> {
+interface Orbit extends EventDispatcher<{ start: object; end: object; change: object }> {
   target: Vector3
   minDistance: number
   maxDistance: number
@@ -144,14 +144,27 @@ export function CameraRig() {
 
     // OrbitControls fires start and end only for input it actually handles, so a click on a 3D key
     // (which turns orbiting off while held) does not count as the user orbiting. A new orbit also
-    // cancels a running flight.
+    // cancels a running flight. The view only counts as moved (Reset view is offered) once a
+    // change event follows, so a plain click that moves nothing does not; damping keeps changing
+    // the view for a moment after the input ends, hence the grace period.
+    let down = false
+    let lastEnd = -Infinity
     const onStart = () => {
+      down = true
       f.active = false
-      useCameraUi.getState().setOrbited(true)
     }
-    const onEnd = () => settleLimits(camera, controls)
+    const onEnd = () => {
+      down = false
+      lastEnd = performance.now()
+      settleLimits(camera, controls)
+    }
+    const onChange = () => {
+      if (f.active) return
+      if (down || performance.now() - lastEnd < 2000) useCameraUi.getState().setOrbited(true)
+    }
     controls.addEventListener('start', onStart)
     controls.addEventListener('end', onEnd)
+    controls.addEventListener('change', onChange)
     settleLimits(camera, controls)
 
     const startFly = (kind: 'reset' | 'writing') => {
@@ -191,6 +204,7 @@ export function CameraRig() {
     return () => {
       controls.removeEventListener('start', onStart)
       controls.removeEventListener('end', onEnd)
+      controls.removeEventListener('change', onChange)
       unsubscribe()
       f.active = false
     }

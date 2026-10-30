@@ -10,22 +10,27 @@ interface CameraUiState {
   mode: 'overview' | 'writing'
   /** The writing view was used at least once, so the nudge toward it is not needed any more. */
   usedWriting: boolean
+  /** The hint toward the writing view has been shown for its time (it appears once per page load). */
+  nudgeDismissed: boolean
   /** Counts view requests; CameraRig flies the camera to the pose of `request` on each change. */
   requestSeq: number
   request: 'reset' | 'writing'
   setOrbited: (orbited: boolean) => void
   requestReset: () => void
   requestWriting: () => void
+  dismissNudge: () => void
 }
 
 export const useCameraUi = create<CameraUiState>()((set) => ({
   orbited: false,
   mode: 'overview',
   usedWriting: false,
+  nudgeDismissed: false,
   requestSeq: 0,
   request: 'reset',
   setOrbited: (orbited) => set((s) => (s.orbited === orbited ? s : { orbited })),
   requestReset: () => set((s) => ({ orbited: false, mode: 'overview', request: 'reset', requestSeq: s.requestSeq + 1 })),
   requestWriting: () =>
     set((s) => ({ orbited: true, mode: 'writing', usedWriting: true, request: 'writing', requestSeq: s.requestSeq + 1 })),
+  dismissNudge: () => set((s) => (s.nudgeDismissed ? s : { nudgeDismissed: true })),
 }))

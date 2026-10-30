@@ -1,0 +1,30 @@
+Typewriter sound clips for the typewriter site.
+
+All source recordings are licensed Creative Commons 0 (CC0 1.0, public domain
+dedication: https://creativecommons.org/publicdomain/zero/1.0/). No attribution
+is required; the authors are listed here as a record. The licence was read on
+each Freesound page on 2026-10-30.
+
+Processing (ffmpeg): the clips come from Freesound's HQ preview MP3s (the
+original files need a login), cut to a single hit, mixed to mono, short fades
+at the ends, peak-normalised to -3 dB (return_slide shares return_stop's gain
+so the slide stays quieter than the end-stop), re-encoded as mono 44.1 kHz MP3
+(LAME -q:a 2).
+
+key_1.mp3         "Typewriter - single key - type 1.wav" by yottasounds, whole clip
+                  https://freesound.org/people/yottasounds/sounds/380138/
+key_2.mp3         "Typewriter - single key - type 2.wav" by yottasounds, whole clip
+                  https://freesound.org/people/yottasounds/sounds/380137/
+space_1.mp3       "Silver Typewriter (Space Bar)" by moodyfingers, 0.375 to 0.575 s
+                  https://freesound.org/people/moodyfingers/sounds/734318/
+bell.mp3          "Typewriter Bell.wav" by ramsamba, whole clip
+                  https://freesound.org/people/ramsamba/sounds/318687/
+return_slide.mp3  "Typewriter bell & carriage reset" by knufds, 1.69 to 2.37 s
+return_stop.mp3   same file, 2.385 to 2.785 s (the end-stop thud)
+                  https://freesound.org/people/knufds/sounds/345955/
+return_full.mp3   "Typewriter Carriage Return.wav" by ramsamba, 0 to 0.8 s
+                  (an alternative to the two-part return above)
+                  https://freesound.org/people/ramsamba/sounds/318686/
+
+Shift, Tab, Backspace, the margin-lock clunk and the lever press have no clips
+of their own: the engine plays the key clips lower and slower (playbackRate).

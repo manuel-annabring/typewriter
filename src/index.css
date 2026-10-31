@@ -12,6 +12,8 @@ body,
    buttons keep taps from becoming double-tap zoom. */
 html,
 body {
+  /* The loader's paper colour, so nothing flashes white before it paints. */
+  background: #e8e2d6;
   overscroll-behavior: none;
   -webkit-user-select: none;
   user-select: none;

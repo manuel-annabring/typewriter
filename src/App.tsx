@@ -4,6 +4,7 @@ import { useKeyboardInput } from './input/useKeyboardInput.ts'
 import DebugOverlay from './ui/DebugOverlay.tsx'
 import Dock from './ui/Dock.tsx'
 import Loader from './ui/Loader.tsx'
+import SceneErrorBoundary from './ui/SceneErrorBoundary.tsx'
 import WritingNudge from './ui/WritingNudge.tsx'
 
 // The 3D scene (three, drei, r3f, the model code) is a separate chunk, so the page and the loader
@@ -14,7 +15,7 @@ export default function App() {
   useKeyboardInput()
   useAudioUnlock()
   return (
-    <>
+    <SceneErrorBoundary>
       <Suspense fallback={null}>
         <Scene />
       </Suspense>
@@ -22,6 +23,6 @@ export default function App() {
       <WritingNudge />
       <Loader />
       {import.meta.env.DEV && <DebugOverlay />}
-    </>
+    </SceneErrorBoundary>
   )
 }

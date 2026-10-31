@@ -12,7 +12,7 @@ import {
 } from '../lib/keyLabels.ts'
 import { KEY_NODE_NAMES } from './contract.ts'
 
-const FONT_URL = '/fonts/InterVariable.woff2'
+const FONT_URL = `${import.meta.env.BASE_URL}fonts/InterVariable.woff2`
 const FONT_FAMILY = '"Inter", system-ui, sans-serif'
 const MAX_ANISOTROPY = 8
 const LABEL_WEIGHT = 600

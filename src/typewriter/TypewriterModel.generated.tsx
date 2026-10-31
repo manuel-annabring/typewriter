@@ -8,6 +8,8 @@ import { useGLTF } from '@react-three/drei'
 import type { ThreeElements } from '@react-three/fiber'
 import type { GLTF } from 'three-stdlib'
 
+const MODEL_URL = `${import.meta.env.BASE_URL}models/typewriter.glb`
+
 type GLTFResult = GLTF & {
   nodes: {
     Knob_L_1: THREE.Mesh
@@ -123,7 +125,7 @@ type GLTFResult = GLTF & {
 }
 
 export function Model(props: ThreeElements['group']) {
-  const { nodes, materials } = useGLTF('/models/typewriter.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF(MODEL_URL) as unknown as GLTFResult
   return (
     <group {...props} dispose={null}>
       <group name="Scene">
@@ -321,4 +323,4 @@ export function Model(props: ThreeElements['group']) {
   )
 }
 
-useGLTF.preload('/models/typewriter.glb')
+useGLTF.preload(MODEL_URL)

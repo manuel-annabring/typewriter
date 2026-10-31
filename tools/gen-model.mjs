@@ -40,6 +40,13 @@ const patches = [
   ['GLTFAction[]', 'THREE.AnimationClip[]'],
   ["JSX.IntrinsicElements['group']", "ThreeElements['group']"],
   [') as GLTFResult', ') as unknown as GLTFResult'],
+  // The site is served under a base path (vite.config.ts), so the model URL can't be absolute.
+  ["useGLTF('/models/typewriter.glb')", 'useGLTF(MODEL_URL)'],
+  ["useGLTF.preload('/models/typewriter.glb')", 'useGLTF.preload(MODEL_URL)'],
+  [
+    "import type { GLTF } from 'three-stdlib'\n",
+    "import type { GLTF } from 'three-stdlib'\n\nconst MODEL_URL = `${import.meta.env.BASE_URL}models/typewriter.glb`\n",
+  ],
 ]
 
 let src = readFileSync(resolve(root, out), 'utf8')

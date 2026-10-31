@@ -1,4 +1,4 @@
-const FONT_URL = '/fonts/SpecialElite-Regular.woff2'
+const FONT_URL = `${import.meta.env.BASE_URL}fonts/SpecialElite-Regular.woff2`
 
 let loading: Promise<boolean> | null = null
 

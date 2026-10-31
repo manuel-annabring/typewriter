@@ -92,6 +92,37 @@ export interface DistanceLimits {
 export const OVERVIEW_LIMITS: DistanceLimits = { min: MIN_DISTANCE, max: MAX_DISTANCE }
 export const WRITING_LIMITS: DistanceLimits = { min: WRITING_MIN_DISTANCE, max: WRITING_MAX_DISTANCE }
 
+// Portrait writing view (mobile slice): looked at from 20 degrees up, the Space bar's front edge
+// is about 131 mm below the strike point on screen, about 170 mm once the keys' nearness to the
+// camera is counted (measured in the browser at 0.40 m: the span was 0.59 of a 812 px window), so
+// with the strike point at the middle of a tall window only two key rows fit above the dock. In portrait the
+// strike point moves up the screen (the look-at point moves down) until the whole keyboard is
+// above WRITING_KEYS_BOTTOM, the fraction of the window height where the dock starts. Landscape
+// windows keep the strike point in the middle, as on desktop.
+export const WRITING_KEYS_SPAN = 0.17
+export const WRITING_KEYS_BOTTOM = 0.85
+/** Highest the strike point may sit in the window (fraction of its height from the top). */
+export const WRITING_STRIKE_MIN = 0.15
+/** In portrait the camera is at least this far out, so the strike point and the keys fit together. */
+export const WRITING_KEYS_MIN_DISTANCE = (WRITING_KEYS_SPAN / (WRITING_KEYS_BOTTOM - WRITING_STRIKE_MIN)) / (2 * Math.tan((FOV * DEG) / 2))
+
+export interface WritingFraming {
+  /** Camera distance from the look-at point (m). */
+  distance: number
+  /** Where the strike point sits in the window, as a fraction of its height from the top (0.5 = middle). */
+  strikeFraction: number
+}
+
+/** Writing view distance and strike point position for a window of `aspect` (width / height). */
+export function writingFraming(aspect: number): WritingFraming {
+  const columns = writingDistance(aspect)
+  if (aspect >= 1) return { distance: columns, strikeFraction: 0.5 }
+  const distance = Math.min(WRITING_MAX_DISTANCE, Math.max(columns, WRITING_KEYS_MIN_DISTANCE))
+  const visibleHeight = 2 * Math.tan((FOV * DEG) / 2) * distance
+  const fraction = WRITING_KEYS_BOTTOM - WRITING_KEYS_SPAN / visibleHeight
+  return { distance, strikeFraction: Math.min(0.5, Math.max(WRITING_STRIKE_MIN, fraction)) }
+}
+
 /** Overview limits for a window of `aspect`: the usual range, widened so the fitted view is inside it. */
 export function overviewLimits(aspect: number): DistanceLimits {
   return { min: MIN_DISTANCE, max: Math.max(MAX_DISTANCE, overviewDistance(aspect) * 1.25) }

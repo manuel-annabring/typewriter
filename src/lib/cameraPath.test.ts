@@ -19,6 +19,10 @@ import {
   WRITING_ELEVATION,
   WRITING_LIMITS,
   writingDistance,
+  writingFraming,
+  WRITING_KEYS_BOTTOM,
+  WRITING_KEYS_SPAN,
+  WRITING_MAX_DISTANCE,
 } from '../scene/cameraConfig.ts'
 import {
   easeOutCubic,
@@ -206,6 +210,32 @@ describe('overviewDistance', () => {
       const { min, max } = overviewLimits(aspect)
       expect(min).toBe(MIN_DISTANCE)
       expect(max).toBeGreaterThanOrEqual(Math.max(MAX_DISTANCE, overviewDistance(aspect)))
+    }
+  })
+})
+
+describe('writingFraming', () => {
+  const visibleHeight = (d: number) => 2 * Math.tan((FOV * Math.PI) / 360) * d
+
+  it('keeps landscape windows as before: strike point in the middle, same distance', () => {
+    for (const aspect of [1, 1.33, 16 / 9, 2.16]) {
+      expect(writingFraming(aspect)).toEqual({ distance: writingDistance(aspect), strikeFraction: 0.5 })
+    }
+  })
+
+  it('puts the keys above the dock in portrait, whatever the shape', () => {
+    for (const aspect of [0.4, 0.46, 0.56, 0.75, 0.9]) {
+      const { distance, strikeFraction } = writingFraming(aspect)
+      expect(strikeFraction).toBeLessThan(0.5)
+      expect(distance).toBeLessThanOrEqual(WRITING_MAX_DISTANCE)
+      const bottom = strikeFraction + WRITING_KEYS_SPAN / visibleHeight(distance)
+      expect(bottom).toBeLessThanOrEqual(WRITING_KEYS_BOTTOM + 1e-9)
+    }
+  })
+
+  it('never goes closer than the column fit', () => {
+    for (const aspect of [0.46, 0.75]) {
+      expect(writingFraming(aspect).distance).toBeGreaterThanOrEqual(writingDistance(aspect))
     }
   })
 })

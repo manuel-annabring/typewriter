@@ -6,6 +6,7 @@ import { useCameraUi } from '../ui/cameraUi.ts'
 import {
   INTRO_DELAY,
   INTRO_DURATION,
+  FOV,
   INTRO_DISTANCE_FACTOR,
   INTRO_FAST_FORWARD,
   INTRO_START_SPHERICAL,
@@ -19,7 +20,7 @@ import {
   WRITING_DURATION,
   WRITING_ELEVATION,
   WRITING_LIMITS,
-  writingDistance,
+  writingFraming,
 } from './cameraConfig.ts'
 
 type Phase = 'waiting' | 'flying' | 'done'
@@ -201,10 +202,15 @@ export function CameraRig() {
         const strike = get().scene.getObjectByName('StrikePoint')
         if (!strike) throw new Error('CameraRig: node StrikePoint not found in the model')
         strike.getWorldPosition(strikeWorld)
-        f.toTarget.x = strikeWorld.x
-        f.toTarget.y = strikeWorld.y
-        f.toTarget.z = strikeWorld.z
-        f.to.radius = writingDistance(aspectOf(get()))
+        const { distance, strikeFraction } = writingFraming(aspectOf(get()))
+        // In portrait the look-at point sits below the strike point (along the view's up axis), so
+        // the strike point shows higher in the window and the keys fit under it.
+        const shift = (0.5 - strikeFraction) * 2 * Math.tan((FOV * Math.PI) / 360) * distance
+        const sinEl = Math.sin(WRITING_ELEVATION)
+        f.toTarget.x = strikeWorld.x + Math.sin(WRITING_AZIMUTH) * sinEl * shift
+        f.toTarget.y = strikeWorld.y - Math.cos(WRITING_ELEVATION) * shift
+        f.toTarget.z = strikeWorld.z + Math.cos(WRITING_AZIMUTH) * sinEl * shift
+        f.to.radius = distance
         f.to.elevation = WRITING_ELEVATION
         f.to.azimuth = WRITING_AZIMUTH
         f.duration = WRITING_DURATION

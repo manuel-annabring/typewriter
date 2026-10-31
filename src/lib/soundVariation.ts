@@ -37,7 +37,7 @@ export const SAMPLE_FILES: readonly string[] = [...new Set(Object.values(SOUND_S
 export const MAX_VOICES = 24
 /** A stolen voice fades out over this long instead of cutting off with a click. */
 export const STEAL_FADE_S = 0.005
-export const MASTER_GAIN = 0.8
+export const MASTER_GAIN = 0.5
 
 /** The next variant index: round-robin order is random, but never the one played last. */
 export function pickVariant(count: number, last: number | null, rand: Random): number {

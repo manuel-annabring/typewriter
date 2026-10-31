@@ -4,6 +4,7 @@ import { useKeyboardInput } from './input/useKeyboardInput.ts'
 import DebugOverlay from './ui/DebugOverlay.tsx'
 import Loader from './ui/Loader.tsx'
 import NewSheetButton from './ui/NewSheetButton.tsx'
+import SavePageButton from './ui/SavePageButton.tsx'
 import SoundToggle from './ui/SoundToggle.tsx'
 import ViewControls from './ui/ViewControls.tsx'
 import WritingNudge from './ui/WritingNudge.tsx'
@@ -21,6 +22,7 @@ export default function App() {
         <Scene />
       </Suspense>
       <ViewControls />
+      <SavePageButton />
       <NewSheetButton />
       <SoundToggle />
       <WritingNudge />

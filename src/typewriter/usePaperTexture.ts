@@ -1,18 +1,12 @@
 import { useThree } from '@react-three/fiber'
 import { useLayoutEffect, type RefObject } from 'react'
 import { CanvasTexture, SRGBColorSpace, type MeshStandardMaterial, type Mesh, type Object3D } from 'three'
-import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  cellOrigin,
-  FONT_FAMILY,
-  FONT_SIZE_PX,
-  glyphJitter,
-  INK,
-} from '../lib/paperGrid.ts'
+import { drawGlyph, drawPage, setupInk } from '../lib/paperDraw.ts'
+import { CANVAS_HEIGHT, CANVAS_WIDTH } from '../lib/paperGrid.ts'
+import { loadPaperFont } from '../lib/paperFont.ts'
+import { usePaperUi } from '../ui/paperUi.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
-const FONT_URL = '/fonts/SpecialElite-Regular.woff2'
 const MAX_ANISOTROPY = 8
 
 /**
@@ -45,33 +39,13 @@ export function usePaperTexture(root: RefObject<Object3D | null>): void {
     material.map = texture
     material.needsUpdate = true
 
-    ctx.font = `${FONT_SIZE_PX}px ${FONT_FAMILY}`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'alphabetic'
-    ctx.fillStyle = INK
-
-    const drawGlyph = (row: number, col: number, char: string) => {
-      const { x, y } = cellOrigin(row, col)
-      const j = glyphJitter(row, col, char)
-      ctx.save()
-      ctx.translate(x + j.dx, y + j.dy)
-      ctx.rotate(j.rotation)
-      ctx.globalAlpha = j.alpha
-      ctx.fillText(char, 0, 0)
-      ctx.restore()
-    }
+    setupInk(ctx)
+    // The page export draws on the tint itself; the screen gets it from the material's colour.
+    usePaperUi.setState({ tint: `#${material.color.getHexString()}` })
 
     const redrawAll = () => {
       // White, so Mat_Paper's own color (the paper tint) shows through the multiply.
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-      ctx.fillStyle = INK
-      useTypewriterStore.getState().lines.forEach((line, row) => {
-        for (let col = 0; col < line.length; col++) {
-          const char = line[col]
-          if (char && char !== ' ') drawGlyph(row, col, char)
-        }
-      })
+      drawPage(ctx, useTypewriterStore.getState().lines, '#ffffff')
       texture.needsUpdate = true
     }
 
@@ -80,7 +54,7 @@ export function usePaperTexture(root: RefObject<Object3D | null>): void {
       const print = state.lastPrint
       if (print === prev.lastPrint && state.lines === prev.lines) return
       if (print && print !== prev.lastPrint && print.seq === drawnSeq + 1) {
-        drawGlyph(print.row, print.col, print.char)
+        drawGlyph(ctx, print.row, print.col, print.char)
         texture.needsUpdate = true
       } else if (state.lines !== prev.lines) {
         redrawAll()
@@ -91,21 +65,14 @@ export function usePaperTexture(root: RefObject<Object3D | null>): void {
     // Glyphs typed before the font is ready are in `lines`; redraw once it is.
     let disposed = false
     redrawAll()
-    const font = new FontFace('Special Elite', `url(${FONT_URL})`)
-    font
-      .load()
-      .then((loaded) => {
-        if (disposed) return
-        document.fonts.add(loaded)
-        redrawAll()
-      })
-      .catch((error: unknown) => {
-        console.warn('Paper texture: Special Elite failed to load, using the fallback font', error)
-      })
+    void loadPaperFont().then((loaded) => {
+      if (!disposed && loaded) redrawAll()
+    })
 
     return () => {
       disposed = true
       unsubscribe()
+      usePaperUi.setState({ tint: null })
       material.map = previousMap
       material.needsUpdate = true
       texture.dispose()

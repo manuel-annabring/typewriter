@@ -83,7 +83,11 @@ What NOT to trust:
   - Sound: `paperOut` and `paperIn`, two clips cut from Freesound 123344 (CC0, keithpeter: paper wound in and out of the platen), stretched to the pull and the insert; the carriage return's ratchet and stop play too when the carriage was not at the left.
   - Not decided or built: restoring the last page between visits (section 10), saving the old page before it goes.
 - **Whole sheet visible, wrapped around the platen** (done): the full page stays in view the whole time and curves around the platen, instead of being clipped below the strike point (the slice 5 stopgap, a clipping plane on `Mat_Paper`). The `Paper` mesh is already subdivided for this (section 5, slice 5b); the bend is a vertex shader on `Mat_Paper` with the line feed as a uniform, and needs no further contract change.
-- **Save or share**: download the page as an image and copy the text to the clipboard.
+- **Save page** (done, 2026-10-31): a "Save page" button (bottom left, top of the stack above New sheet) downloads the typed page as a PNG. Decided by Manuel: image only (no clipboard, no text export), no keyboard shortcut, no confirm on New sheet.
+  - Image: the flat page as typed, 1680 x 2376 px (A4 at 8 px/mm), on the paper tint read from `Mat_Paper` at runtime; the same draw code as the paper texture (`src/lib/paperDraw.ts`), so glyph positions, jitter and ink alpha match the screen. The screen shows the paper lit, so it looks slightly darker or warmer than the file.
+  - File name `typewriter-YYYY-MM-DD-HHMM.png` (local time). Download via `canvas.toBlob` and `<a download>`; the object URL is revoked after 10 s.
+  - Button: dimmed and inert on a page with no ink (spaces only counts as empty) and while a sheet swap runs; the label reads "Saved" for 1.5 s after a download starts. Waits up to 3 s for Special Elite, then draws with the fallback font like the screen.
+  - Not done: copy text, share sheet, restoring the page between visits (section 10), a mobile check (iOS Safari limits canvases to about 16 MP; 4 MP is fine).
 - **Mobile support** (stretch): tap keys with comfortable touch targets, camera framing for portrait screens. Desktop comes first.
 
 ### Out of scope for now
@@ -176,12 +180,12 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
    - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
    - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
-7. Phase 2 slices, one at a time: ~~sound~~ (done, with CC0 clips), ~~intro camera~~ (done, camera: limits, intro, reset), ~~new sheet~~ (done), save or share, mobile.
+7. Phase 2 slices, one at a time: ~~sound~~ (done, with CC0 clips), ~~intro camera~~ (done, camera: limits, intro, reset), ~~new sheet~~ (done), ~~save page~~ (done), mobile.
 8. Release: performance check, loading state, deployment, portfolio write-up.
 
 ## 8. Definition of done (Phase 1)
 
-Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound are built too. New sheet is built too. Next: save or share, mobile.
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound are built too. New sheet and Save page are built too. Next: mobile.
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.
@@ -201,7 +205,7 @@ Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: th
 - Tab key and Shift: does shift change the printed character, and what do the key caps show?
 - Lines and characters per page (the paper format is decided: A4).
 - ~~Camera: orbit limits, or a fixed view?~~ Decided 2026-10-29: free orbit inside limits (no pan, elevation 8° to 61°, azimuth ±70° round the front, 0.30 to 1.50 m).
-- Is the page content kept between visits (localStorage)? (Only the sound mute choice is kept so far; see the sound entry in section 4. Decided for the new-sheet slice: a fresh sheet on every visit; restoring the last page is left open for the Save or share slice.)
+- Is the page content kept between visits (localStorage)? (Only the sound mute choice is kept so far; see the sound entry in section 4. Decided for the new-sheet slice: a fresh sheet on every visit; Save page, the way to keep a page, is built; restoring the last page was kept out of that slice and is still open.)
 - Hosting and domain.
 - ~~Sound source~~ Decided 2026-10-30: everything was built and tuned on synthesized placeholders first, then replaced by seven CC0 clips from Freesound (licences read on each page, listed in `public/audio/LICENSES.txt`). The engine only sees `AudioBuffer`s, so a different clip set is a change to `SOUND_SPECS`.
 - Project title and any on-screen hint text.

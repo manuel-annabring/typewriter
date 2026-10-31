@@ -3,7 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Typewriter</title>
+    <title>Typewriter: a typewriter you can type on, in the browser</title>
+    <meta
+      name="description"
+      content="An interactive 3D typewriter for the browser. Type on your keyboard or click the keys, and watch the carriage slide, the bell ring and the paper feed."
+    />
+    <meta name="theme-color" content="#e8e2d6" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Starts the model download with the page instead of when the 3D chunk has run. -->
+    <link rel="preload" href="/models/typewriter.glb" as="fetch" crossorigin />
+
+    <!-- Link previews. Social sites need absolute URLs: change these if the site moves. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Typewriter" />
+    <meta property="og:description" content="A typewriter you can type on, in the browser. Real keys, a sliding carriage, a bell and a sheet of paper." />
+    <meta property="og:url" content="https://manuel-annabring.github.io/typewriter/" />
+    <meta property="og:image" content="https://manuel-annabring.github.io/typewriter/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>

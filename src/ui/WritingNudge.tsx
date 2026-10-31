@@ -54,7 +54,7 @@ export default function WritingNudge() {
       }}
     >
       <style>{CSS}</style>
-      Click the paper, or use Writing view, to read what you type
+      Click or tap the paper, or use Writing view, to read what you type
     </div>
   )
 }

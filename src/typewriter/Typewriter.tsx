@@ -2,6 +2,7 @@ import { useThree, type ThreeElements, type ThreeEvent } from '@react-three/fibe
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import type { Group, Object3D } from 'three'
 import { holdKey } from '../input/dispatchKey.ts'
+import { TapTracker } from '../lib/tapTracker.ts'
 import { useCameraUi } from '../ui/cameraUi.ts'
 import { assertModelContract, KEY_NODE_NAMES } from './contract.ts'
 import { Model } from './TypewriterModel.generated.tsx'
@@ -70,6 +71,8 @@ export function Typewriter(props: ThreeElements['group']) {
     [get],
   )
   const releaseHeld = useRef<(() => void) | null>(null)
+  // Touch presses on keys: a finger only types when it lifts without having dragged (see below).
+  const taps = useRef(new TapTracker(CLICK_MAX_MOVE_PX))
 
   useEffect(() => {
     // The pointer can leave the key (or the window) before the button goes up,
@@ -78,14 +81,35 @@ export function Typewriter(props: ThreeElements['group']) {
       releaseHeld.current?.()
       releaseHeld.current = null
     }
-    window.addEventListener('pointerup', release)
-    window.addEventListener('pointercancel', release)
-    window.addEventListener('blur', release)
-    return () => {
-      window.removeEventListener('pointerup', release)
-      window.removeEventListener('pointercancel', release)
-      window.removeEventListener('blur', release)
+    const pending = taps.current
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') pending.move(e.pointerId, e.clientX, e.clientY)
+    }
+    const onUp = (e: PointerEvent) => {
       release()
+      if (e.pointerType !== 'touch') return
+      const name = pending.up(e.pointerId)
+      if (name) holdKey(name)()
+    }
+    const onCancel = (e: PointerEvent) => {
+      release()
+      pending.cancel(e.pointerId)
+    }
+    const onBlur = () => {
+      release()
+      pending.clear()
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onCancel)
+    window.addEventListener('blur', onBlur)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onCancel)
+      window.removeEventListener('blur', onBlur)
+      release()
+      pending.clear()
       setCursor('')
     }
   }, [setCursor])
@@ -96,6 +120,13 @@ export function Typewriter(props: ThreeElements['group']) {
     // behind it, so any non-pressable hit stops the event too.
     e.stopPropagation()
     if (!name) return
+    // Touch (decided 2026-10-31): the key is pressed when the finger lifts, and only if it did not
+    // drag, so a drag that starts on a key orbits instead of typing a letter. Orbiting stays on.
+    // Mouse and pen press on pointer down as before.
+    if (e.nativeEvent.pointerType === 'touch') {
+      taps.current.down(e.nativeEvent.pointerId, name, e.nativeEvent.clientX, e.nativeEvent.clientY)
+      return
+    }
     releaseHeld.current?.()
     const releaseKey = holdKey(name)
     // OrbitControls listens on the DOM, so stopPropagation above doesn't stop

@@ -2,7 +2,7 @@
 // 2026-10-29; the SPEC open question "orbit limits or a fixed view" is answered by a limited,
 // front-facing orbit: no pan, no view from below the floor or round the back.
 
-import { fitDistance, setFromSpherical, toSpherical, type Spherical, type Vec3 } from '../lib/cameraPath.ts'
+import { fitBoxWidthDistance, fitDistance, setFromSpherical, toSpherical, type Spherical, type Vec3 } from '../lib/cameraPath.ts'
 import { PITCH_MM } from '../lib/paperGrid.ts'
 
 const DEG = Math.PI / 180
@@ -40,6 +40,27 @@ export const INTRO_START_POSITION: readonly [number, number, number] = (() => {
   setFromSpherical(p, REST_TARGET, INTRO_START_SPHERICAL)
   return [p.x, p.y, p.z]
 })()
+// Overview framing for any window shape (mobile slice, 2026-10-31). The resting view above fits a
+// landscape window; in portrait it would crop the sides, so the overview distance grows until a
+// box round the machine fits (never below the resting distance, so desktop is unchanged). The box
+// is the machine's measured extent in the glTF frame, in meters: x from the body's left edge to
+// the right knob at rest (391 mm), y from the floor to just under the paper's top at rest, z from
+// behind the platen to the keyboard's front edge. The paper table's tail reaches further back at
+// a low height, which the generous z margin covers. Re-measure if the model's outline changes.
+export const MACHINE_BOX = {
+  min: [-0.15, 0, -0.12] as const,
+  max: [0.241, 0.33, 0.156] as const,
+}
+/** Space left round the machine in the fitted overview, as a fraction of the view. */
+export const FIT_MARGIN = 0.05
+export const INTRO_DISTANCE_FACTOR = 2
+
+/** Radius of the overview for a window of `aspect` (width / height): the resting radius or more. */
+export function overviewDistance(aspect: number): number {
+  const fit = fitBoxWidthDistance(MACHINE_BOX, REST_TARGET, REST_SPHERICAL.azimuth, REST_SPHERICAL.elevation, FOV, aspect, FIT_MARGIN)
+  return Math.max(REST_SPHERICAL.radius, fit)
+}
+
 export const INTRO_DURATION = 2.5
 /** The loader overlay fades out over 0.4 s once loading is done (ui/Loader). */
 export const INTRO_DELAY = 0.4
@@ -70,6 +91,11 @@ export interface DistanceLimits {
 }
 export const OVERVIEW_LIMITS: DistanceLimits = { min: MIN_DISTANCE, max: MAX_DISTANCE }
 export const WRITING_LIMITS: DistanceLimits = { min: WRITING_MIN_DISTANCE, max: WRITING_MAX_DISTANCE }
+
+/** Overview limits for a window of `aspect`: the usual range, widened so the fitted view is inside it. */
+export function overviewLimits(aspect: number): DistanceLimits {
+  return { min: MIN_DISTANCE, max: Math.max(MAX_DISTANCE, overviewDistance(aspect) * 1.25) }
+}
 
 /** Distance of the writing view for a window of `aspect` (width / height). */
 export function writingDistance(aspect: number): number {

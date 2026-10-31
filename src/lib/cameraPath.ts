@@ -64,3 +64,44 @@ export function fitDistance(columns: number, pitchM: number, fovDeg: number, asp
   const visibleHeightPerMeter = 2 * Math.tan((fovDeg * Math.PI) / 360)
   return (columns * pitchM) / (visibleHeightPerMeter * aspect)
 }
+
+export interface Box3Like {
+  min: Tuple3
+  max: Tuple3
+}
+
+/**
+ * Smallest camera distance from `target`, looking at it from `azimuth` / `elevation`, at which the
+ * width of `box` (all eight corners, projected on the view's horizontal axis) fits in the view
+ * with `margin` (fraction of the view, e.g. 0.06) to spare on each side. Only the width is fitted:
+ * the vertical field of view is fixed, so height is what the resting view already settles for and
+ * only a narrow window needs the camera to back off. `fovDeg` is vertical, `aspect` is
+ * width / height. Perspective is exact per corner (a corner nearer the camera needs more room), but
+ * the box is a stand-in for the machine, so the result is slightly generous.
+ */
+export function fitBoxWidthDistance(
+  box: Box3Like,
+  target: Tuple3,
+  azimuth: number,
+  elevation: number,
+  fovDeg: number,
+  aspect: number,
+  margin: number,
+): number {
+  const tanH = Math.tan((fovDeg * Math.PI) / 360) * aspect * (1 - margin)
+  const sa = Math.sin(azimuth)
+  const ca = Math.cos(azimuth)
+  const se = Math.sin(elevation)
+  const ce = Math.cos(elevation)
+  let need = 0
+  for (let i = 0; i < 8; i++) {
+    const cx = (i & 1 ? box.max[0] : box.min[0]) - target[0]
+    const cy = (i & 2 ? box.max[1] : box.min[1]) - target[1]
+    const cz = (i & 4 ? box.max[2] : box.min[2]) - target[2]
+    // Right axis of the camera, and the direction from the target toward the camera.
+    const x = cx * ca - cz * sa
+    const toward = cx * sa * ce + cy * se + cz * ca * ce
+    need = Math.max(need, toward + Math.abs(x) / tanH)
+  }
+  return need
+}

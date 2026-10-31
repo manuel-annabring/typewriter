@@ -6,10 +6,12 @@ import { useCameraUi } from '../ui/cameraUi.ts'
 import {
   INTRO_DELAY,
   INTRO_DURATION,
+  INTRO_DISTANCE_FACTOR,
   INTRO_FAST_FORWARD,
   INTRO_START_SPHERICAL,
   MOTION_ENABLED,
-  OVERVIEW_LIMITS,
+  overviewDistance,
+  overviewLimits,
   REST_SPHERICAL,
   REST_TARGET,
   RESET_DURATION,
@@ -53,14 +55,31 @@ interface Orbit extends EventDispatcher<{ start: object; end: object; change: ob
 const isOrbit = (c: EventDispatcher | null): c is Orbit => c !== null && 'target' in c
 
 const scratchS: Spherical = { radius: 0, elevation: 0, azimuth: 0 }
+const scratchStart: Spherical = { radius: 0, elevation: 0, azimuth: 0 }
+const scratchRest: Spherical = { radius: 0, elevation: 0, azimuth: 0 }
 const scratchV: Vec3 = { x: 0, y: 0, z: 0 }
 const scratchT: [number, number, number] = [0, 0, 0]
 const strikeWorld = new Vector3()
 // A long frame (shader compile after the model arrives) must not eat the flight.
 const MAX_DT = 1 / 20
 
-function place(camera: Camera, e: number) {
-  lerpSpherical(INTRO_START_SPHERICAL, REST_SPHERICAL, e, scratchS)
+const aspectOf = (s: { size: { width: number; height: number } }) => s.size.width / s.size.height
+
+/** The resting view for a window of `aspect`: the fixed angles at the overview distance that fits the machine. */
+function restFor(aspect: number, out: Spherical): Spherical {
+  out.radius = overviewDistance(aspect)
+  out.elevation = REST_SPHERICAL.elevation
+  out.azimuth = REST_SPHERICAL.azimuth
+  return out
+}
+
+/** Puts the camera `e` (0 to 1) of the way along the intro path, which ends in the resting view for `aspect`. */
+function place(camera: Camera, e: number, aspect: number) {
+  const rest = restFor(aspect, scratchRest)
+  scratchStart.radius = rest.radius * INTRO_DISTANCE_FACTOR
+  scratchStart.elevation = INTRO_START_SPHERICAL.elevation
+  scratchStart.azimuth = INTRO_START_SPHERICAL.azimuth
+  lerpSpherical(scratchStart, rest, e, scratchS)
   setFromSpherical(scratchV, REST_TARGET, scratchS)
   camera.position.set(scratchV.x, scratchV.y, scratchV.z)
 }
@@ -75,8 +94,8 @@ function resetIntro(run: Intro) {
  * it; this way a move that starts or ends outside the new limits (overview to writing and back, or
  * an orbit interrupting one) stays smooth, and the limits tighten again at the next settle.
  */
-function settleLimits(camera: Camera, controls: Orbit) {
-  const limits = useCameraUi.getState().mode === 'writing' ? WRITING_LIMITS : OVERVIEW_LIMITS
+function settleLimits(camera: Camera, controls: Orbit, aspect: number) {
+  const limits = useCameraUi.getState().mode === 'writing' ? WRITING_LIMITS : overviewLimits(aspect)
   const d = camera.position.distanceTo(controls.target)
   controls.minDistance = Math.min(limits.min, d)
   controls.maxDistance = Math.max(limits.max, d)
@@ -105,14 +124,17 @@ export function CameraRig() {
     const { camera, gl } = get()
     const run = intro.current
     resetIntro(run)
-    if (MOTION_ENABLED) place(camera, 0)
-    else run.phase = 'done'
+    if (MOTION_ENABLED) place(camera, 0, aspectOf(get()))
+    else {
+      place(camera, 1, aspectOf(get()))
+      run.phase = 'done'
+    }
 
     // Pointer press or wheel: the user takes over. Before the flight has started they have seen
     // nothing move yet, so go straight to the resting view; mid-flight, stay where the camera is.
     const stop = () => {
       if (run.phase === 'done') return
-      if (run.phase === 'waiting') place(camera, 1)
+      if (run.phase === 'waiting') place(camera, 1, aspectOf(get()))
       run.phase = 'done'
     }
     // Key press: finish the flight quickly instead of freezing it far away.
@@ -156,7 +178,7 @@ export function CameraRig() {
     const onEnd = () => {
       down = false
       lastEnd = performance.now()
-      settleLimits(camera, controls)
+      settleLimits(camera, controls, aspectOf(get()))
     }
     const onChange = () => {
       if (f.active) return
@@ -165,7 +187,7 @@ export function CameraRig() {
     controls.addEventListener('start', onStart)
     controls.addEventListener('end', onEnd)
     controls.addEventListener('change', onChange)
-    settleLimits(camera, controls)
+    settleLimits(camera, controls, aspectOf(get()))
 
     const startFly = (kind: 'reset' | 'writing') => {
       intro.current.phase = 'done'
@@ -182,13 +204,12 @@ export function CameraRig() {
         f.toTarget.x = strikeWorld.x
         f.toTarget.y = strikeWorld.y
         f.toTarget.z = strikeWorld.z
-        const { width, height } = get().size
-        f.to.radius = writingDistance(width / height)
+        f.to.radius = writingDistance(aspectOf(get()))
         f.to.elevation = WRITING_ELEVATION
         f.to.azimuth = WRITING_AZIMUTH
         f.duration = WRITING_DURATION
       } else {
-        Object.assign(f.to, REST_SPHERICAL)
+        restFor(aspectOf(get()), f.to)
         f.toTarget.x = REST_TARGET[0]
         f.toTarget.y = REST_TARGET[1]
         f.toTarget.z = REST_TARGET[2]
@@ -196,7 +217,7 @@ export function CameraRig() {
       }
       f.t = 0
       f.active = true
-      settleLimits(camera, controls)
+      settleLimits(camera, controls, aspectOf(get()))
     }
     const unsubscribe = useCameraUi.subscribe((state, prev) => {
       if (state.requestSeq !== prev.requestSeq) startFly(state.request)
@@ -210,6 +231,22 @@ export function CameraRig() {
     }
   }, [get, hasControls])
 
+  // A new window shape (rotating a phone, resizing the browser) changes the fitted overview
+  // distance. Re-fit only while the view is untouched; once the user has orbited, zoomed or gone to
+  // the writing view, only Reset view fits it, so the camera never jumps under their hands. The
+  // flight is the Reset view one. A change in the writing view is left alone too (it fits at request time).
+  const size = useThree((s) => s.size)
+  const lastRest = useRef(0)
+  useEffect(() => {
+    const radius = overviewDistance(size.width / size.height)
+    const previous = lastRest.current
+    lastRest.current = radius
+    if (previous === 0 || Math.abs(radius - previous) < 1e-3) return
+    const ui = useCameraUi.getState()
+    if (ui.orbited || ui.mode !== 'overview' || intro.current.phase !== 'done' || fly.current.active) return
+    ui.requestReset()
+  }, [size])
+
   useFrame((state, delta) => {
     const run = intro.current
     const dt = Math.min(delta, MAX_DT)
@@ -222,7 +259,7 @@ export function CameraRig() {
         run.t = 0
       }
       run.e = introEase(run.from, run.t, run.duration)
-      place(state.camera, run.e)
+      place(state.camera, run.e, aspectOf(state))
       if (run.t >= run.duration) run.phase = 'done'
       return
     }
@@ -241,7 +278,7 @@ export function CameraRig() {
     controls.target.set(scratchT[0], scratchT[1], scratchT[2])
     if (e >= 1) {
       f.active = false
-      settleLimits(state.camera, controls)
+      settleLimits(state.camera, controls, aspectOf(state))
     }
   }, -2)
 

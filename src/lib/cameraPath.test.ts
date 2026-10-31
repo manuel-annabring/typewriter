@@ -6,6 +6,10 @@ import {
   MAX_ELEVATION,
   MIN_DISTANCE,
   MIN_ELEVATION,
+  FOV,
+  MACHINE_BOX,
+  overviewDistance,
+  overviewLimits,
   REST_POSITION,
   REST_SPHERICAL,
   REST_TARGET,
@@ -18,6 +22,7 @@ import {
 } from '../scene/cameraConfig.ts'
 import {
   easeOutCubic,
+  fitBoxWidthDistance,
   fitDistance,
   introEase,
   lerpSpherical,
@@ -143,5 +148,64 @@ describe('writing view', () => {
     expect(WRITING_ELEVATION).toBeLessThanOrEqual(MAX_ELEVATION)
     expect(Math.abs(WRITING_AZIMUTH)).toBeLessThanOrEqual(AZIMUTH_LIMIT)
     expect(WRITING_COLUMNS).toBeGreaterThan(66)
+  })
+})
+
+describe('fitBoxWidthDistance', () => {
+  const box = { min: [-1, 0, -1], max: [1, 1, 1] } as const
+  const target: readonly [number, number, number] = [0, 0, 0]
+
+  it('matches the flat formula for a thin box seen head-on', () => {
+    const flat = { min: [-0.5, 0, 0], max: [0.5, 1, 0] } as const
+    const d = fitBoxWidthDistance(flat, target, 0, 0, 40, 0.5, 0)
+    expect(d).toBeCloseTo(fitDistance(1, 1, 40, 0.5), 6)
+  })
+
+  it('grows as the window gets narrower and with the margin', () => {
+    const wide = fitBoxWidthDistance(box, target, 0.5, 0.4, 40, 1, 0.05)
+    const narrow = fitBoxWidthDistance(box, target, 0.5, 0.4, 40, 0.5, 0.05)
+    expect(narrow).toBeGreaterThan(wide)
+    expect(fitBoxWidthDistance(box, target, 0.5, 0.4, 40, 1, 0.2)).toBeGreaterThan(wide)
+  })
+
+  it('puts every corner inside the view at the returned distance', () => {
+    const az = 28.6 * (Math.PI / 180)
+    const el = 24.1 * (Math.PI / 180)
+    const aspect = 0.46
+    const d = fitBoxWidthDistance(box, target, az, el, FOV, aspect, 0)
+    const tanH = Math.tan((FOV * Math.PI) / 360) * aspect
+    let worst = 0
+    for (const x of [-1, 1]) for (const y of [0, 1]) for (const z of [-1, 1]) {
+      const right = x * Math.cos(az) - z * Math.sin(az)
+      const toward = x * Math.sin(az) * Math.cos(el) + y * Math.sin(el) + z * Math.cos(az) * Math.cos(el)
+      worst = Math.max(worst, Math.abs(right) / (d - toward) / tanH)
+    }
+    expect(worst).toBeCloseTo(1, 6)
+  })
+})
+
+describe('overviewDistance', () => {
+  it('keeps the resting distance for every landscape window (desktop unchanged)', () => {
+    for (const aspect of [1.33, 1.6, 16 / 9, 2.16, 2.4]) {
+      expect(overviewDistance(aspect)).toBeCloseTo(REST_SPHERICAL.radius, 6)
+    }
+  })
+
+  it('backs off for portrait windows so the machine fits the width', () => {
+    expect(overviewDistance(0.46)).toBeGreaterThan(1.5)
+    expect(overviewDistance(0.75)).toBeGreaterThan(REST_SPHERICAL.radius)
+    expect(overviewDistance(0.46)).toBeGreaterThan(overviewDistance(0.75))
+  })
+
+  it('measures the machine at least as wide as the body (300 mm) plus the right knob', () => {
+    expect(MACHINE_BOX.max[0] - MACHINE_BOX.min[0]).toBeGreaterThan(0.39)
+  })
+
+  it('widens the overview limits to contain the fitted distance', () => {
+    for (const aspect of [0.3, 0.46, 1, 1.78]) {
+      const { min, max } = overviewLimits(aspect)
+      expect(min).toBe(MIN_DISTANCE)
+      expect(max).toBeGreaterThanOrEqual(Math.max(MAX_DISTANCE, overviewDistance(aspect)))
+    }
   })
 })

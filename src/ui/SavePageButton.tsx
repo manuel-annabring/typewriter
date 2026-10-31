@@ -6,7 +6,7 @@ import { BUTTON_STYLE } from './buttonStyle.ts'
 
 const SAVED_MS = 1500
 
-// Bottom left, top of the stack. Dimmed and inert on an empty page and while a sheet swap runs.
+// In the dock, top of the page tools. Dimmed and inert on an empty page and while a sheet swap runs.
 export default function SavePageButton() {
   const canSave = useTypewriterStore((s) => s.swap === 'idle' && hasInk(s.lines))
   const [saved, setSaved] = useState(false)
@@ -29,9 +29,6 @@ export default function SavePageButton() {
       }}
       style={{
         ...BUTTON_STYLE,
-        position: 'fixed',
-        left: 16,
-        bottom: 96,
         opacity: canSave ? 1 : 0.5,
         cursor: canSave ? 'pointer' : 'default',
       }}

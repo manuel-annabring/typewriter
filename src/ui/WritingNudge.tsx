@@ -8,7 +8,9 @@ const NUDGE_AFTER_CHARS = 15
 const NUDGE_MS = 10_000
 
 const CSS = `
-.writing-nudge { transition: opacity 0.4s ease }
+.writing-nudge { bottom: 64px; transition: opacity 0.4s ease }
+/* Narrow window: the dock is two rows of 44 px buttons, so sit above it. */
+@media (max-width: 600px) { .writing-nudge { bottom: calc(120px + env(safe-area-inset-bottom)) } }
 @media (prefers-reduced-motion: reduce) { .writing-nudge { transition: none } }
 `
 
@@ -37,7 +39,6 @@ export default function WritingNudge() {
       style={{
         position: 'fixed',
         left: '50%',
-        bottom: 64,
         transform: 'translateX(-50%)',
         maxWidth: 'calc(100vw - 32px)',
         padding: '8px 12px',

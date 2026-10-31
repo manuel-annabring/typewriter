@@ -26,7 +26,7 @@ function ViewButton({ onClick, children }: { onClick: () => void; children: Reac
   )
 }
 
-// Camera view buttons, bottom right. "Writing view" is offered in the overview (it flies to the
+// Camera view buttons, in the dock (bottom right on desktop). "Writing view" is offered in the overview (it flies to the
 // strike point, same as a click on the carriage); "Reset view" once the view has moved. Esc does
 // what Reset view does.
 export default function ViewControls() {
@@ -46,7 +46,7 @@ export default function ViewControls() {
   }, [])
 
   return (
-    <div role="group" aria-label="Camera view" style={{ position: 'fixed', right: 16, bottom: 16, display: 'flex', gap: 8 }}>
+    <div role="group" aria-label="Camera view" className="dock-camera">
       <style>{CSS}</style>
       {mode === 'overview' && <ViewButton onClick={requestWriting}>Writing view</ViewButton>}
       {orbited && <ViewButton onClick={requestReset}>Reset view</ViewButton>}

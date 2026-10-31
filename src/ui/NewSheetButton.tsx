@@ -1,7 +1,7 @@
 import { requestNewSheet } from '../input/newSheet.ts'
 import { BUTTON_STYLE } from './buttonStyle.ts'
 
-// Bottom left, above the sound toggle. No confirm: the old page is discarded.
+// In the dock, above the sound toggle. No confirm: the old page is discarded.
 export default function NewSheetButton() {
   return (
     <button
@@ -11,7 +11,7 @@ export default function NewSheetButton() {
         // Keep focus off the button so Space and Enter go on typing, not on pressing it again.
         e.currentTarget.blur()
       }}
-      style={{ ...BUTTON_STYLE, position: 'fixed', left: 16, bottom: 56 }}
+      style={BUTTON_STYLE}
     >
       New sheet
     </button>

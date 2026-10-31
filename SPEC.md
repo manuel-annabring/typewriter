@@ -87,7 +87,7 @@ What NOT to trust:
   - Image: the flat page as typed, 1680 x 2376 px (A4 at 8 px/mm), on the paper tint read from `Mat_Paper` at runtime; the same draw code as the paper texture (`src/lib/paperDraw.ts`), so glyph positions, jitter and ink alpha match the screen. The screen shows the paper lit, so it looks slightly darker or warmer than the file.
   - File name `typewriter-YYYY-MM-DD-HHMM.png` (local time). Download via `canvas.toBlob` and `<a download>`; the object URL is revoked after 10 s.
   - Button: dimmed and inert on a page with no ink (spaces only counts as empty) and while a sheet swap runs; the label reads "Saved" for 1.5 s after a download starts. Waits up to 3 s for Special Elite, then draws with the fallback font like the screen.
-  - Not done: copy text, share sheet, restoring the page between visits (section 10), a mobile check (iOS Safari limits canvases to about 16 MP; 4 MP is fine).
+  - Not done: copy text, share sheet, restoring the page between visits (out of scope), a mobile check (iOS Safari limits canvases to about 16 MP; 4 MP is fine).
 - **Mobile support** (stretch): tap keys with comfortable touch targets, camera framing for portrait screens. Desktop comes first.
 
 ### Out of scope for now
@@ -95,6 +95,7 @@ What NOT to trust:
 - Visible typebar swing per letter, shift mechanism, ribbon animation.
 - Switchable keyboard layouts (the keys are printed QWERTY).
 - Accounts, backend, multiplayer.
+- Restoring the last page between visits (decided 2026-10-31: every visit starts with a fresh sheet; Save page is the way to keep a page).
 
 ## 5. Model contract (Blender to code)
 
@@ -205,7 +206,7 @@ Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: th
 - Tab key and Shift: does shift change the printed character, and what do the key caps show?
 - Lines and characters per page (the paper format is decided: A4).
 - ~~Camera: orbit limits, or a fixed view?~~ Decided 2026-10-29: free orbit inside limits (no pan, elevation 8° to 61°, azimuth ±70° round the front, 0.30 to 1.50 m).
-- Is the page content kept between visits (localStorage)? (Only the sound mute choice is kept so far; see the sound entry in section 4. Decided for the new-sheet slice: a fresh sheet on every visit; Save page, the way to keep a page, is built; restoring the last page was kept out of that slice and is still open.)
+- ~~Is the page content kept between visits (localStorage)?~~ Decided 2026-10-31: no, out of scope. Every visit starts with a fresh sheet; Save page (section 4) is the way to keep a page. Only the sound mute choice is kept.
 - Hosting and domain.
 - ~~Sound source~~ Decided 2026-10-30: everything was built and tuned on synthesized placeholders first, then replaced by seven CC0 clips from Freesound (licences read on each page, listed in `public/audio/LICENSES.txt`). The engine only sees `AudioBuffer`s, so a different clip set is a change to `SOUND_SPECS`.
 - Project title and any on-screen hint text.

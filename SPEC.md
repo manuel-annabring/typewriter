@@ -88,7 +88,7 @@ What NOT to trust:
   - File name `typewriter-YYYY-MM-DD-HHMM.png` (local time). Download via `canvas.toBlob` and `<a download>`; the object URL is revoked after 10 s.
   - Button: dimmed and inert on a page with no ink (spaces only counts as empty) and while a sheet swap runs; the label reads "Saved" for 1.5 s after a download starts. Waits up to 3 s for Special Elite, then draws with the fallback font like the screen.
   - Not done: copy text, share sheet, restoring the page between visits (out of scope), a mobile check (iOS Safari limits canvases to about 16 MP; 4 MP is fine).
-- **Mobile support** (built 2026-10-31, stretch; desktop is unchanged): phone and tablet, in the browser, tapping the 3D keys. Decided by Manuel in the discussion: no native on-screen keyboard and no flat HTML keyboard (the machine is the point; a tablet with a physical keyboard already works through `keydown`); revisit after a real-device test.
+- **Mobile support** (built 2026-10-31, stretch; desktop is unchanged): phone and tablet, in the browser, tapping the 3D keys. Decided by Manuel in the discussion: no native on-screen keyboard and no flat HTML keyboard (the machine is the point; a tablet with a physical keyboard already works through `keydown`); the real-device test (below) found tapping good enough, so none is planned.
   - Typing posture: on a 375 px phone a key cap is about 12 to 14 px wide in the fitted overview and about 60 px in the writing view (distance clamped at 0.40 m, so about 53 of the 70 columns show), so the writing view is where you type on a phone. A tap on a key types in every view (no gate).
   - Portrait writing view (`writingFraming`, `cameraConfig.ts`): with the strike point in the middle of a tall window only two key rows fit above the dock, so in portrait the strike point moves up the window (the look-at point sits below it) until the whole keyboard down to the Space bar is above the dock, and the camera is never closer than 0.33 m. A 375 x 812 phone gets the strike point at about 27 % of the height. Landscape windows are as before. A landscape phone (about 82 mm of view height) still shows the strike point and not the keys in the writing view; fixing that is not part of this slice.
   - Touch presses: a finger presses a key when it lifts, and only if it moved at most 5 px (the click threshold; `TapTracker` in `src/lib/tapTracker.ts`), so a drag that starts on a key orbits instead of typing a letter. The cost is one tap length (about 60 to 120 ms) before the clack. Mouse and pen press on pointer down as before. Two fingers are tracked separately.
@@ -96,7 +96,7 @@ What NOT to trust:
   - Overlay: `Dock` (`src/ui/Dock.tsx`, `dock.css`) holds the page tools and the camera buttons. Desktop keeps the corners. With a coarse pointer or a window up to 600 px wide the buttons are 44 px high; up to 600 px wide the groups become two centered rows along the bottom (camera buttons above the page tools), padded by the safe-area insets (`viewport-fit=cover`), and the writing hint sits above them.
   - Page behavior: no text selection, long-press callout, rubber-band scroll or tap flash (`index.css`); the canvas takes all gestures (`touch-action: none`), buttons use `touch-action: manipulation`.
   - Performance: no change. r3f's default `dpr` is [1, 2], the whole download is about 2.5 MB, the paper texture stays 1680 x 2376 px (4 MP, under iOS's canvas limit). If keystrokes are janky on a phone, the fallback is a lower on-screen texture resolution (`PX_PER_MM` 6) with Save page still drawn at 8, which needs the draw scale as a parameter.
-  - Not checked (no device): real touch, safe areas, audio unlock on iOS, performance, WebGL context loss after backgrounding the tab, the Save page download on iOS.
+  - Device test (2026-10-31, Manuel's iPhone, dev server over wifi): "works good enough". Desktop stays the main target, so mobile is closed as a stretch goal. Not individually reported and so not confirmed: audio unlock, the Save page download on iOS, WebGL context loss after backgrounding the tab, landscape typing (see above).
 
 ### Out of scope for now
 
@@ -189,12 +189,12 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done (paper path, slice 6c): `PaperTable` (child of `Carriage`, `Mat_Metal`) holds the sheet's tail, its top face 0.8 mm under the tail and sloping at `TAIL_ANGLE` (35°); `PaperHolder` carries the bail bar and two rubber rollers (`Mat_Platen`) that touch the sheet where `BAIL_WRAP` (30°, so 38° above the platen's front horizontal) ends. Journal: `steps/04_paper_table.py`, `steps/05_paper_bail.py`. If an angle changes, change the constant in `src/lib/paperBend.ts` and rerun both steps; the tail must stay flatter than the typed front part (about 52° above horizontal).
    - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
    - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
-7. Phase 2 slices, one at a time: ~~sound~~ (done, with CC0 clips), ~~intro camera~~ (done, camera: limits, intro, reset), ~~new sheet~~ (done), ~~save page~~ (done), ~~mobile~~ (built 2026-10-31, real-device check open).
+7. Phase 2 slices, one at a time: ~~sound~~ (done, with CC0 clips), ~~intro camera~~ (done, camera: limits, intro, reset), ~~new sheet~~ (done), ~~save page~~ (done), ~~mobile~~ (done 2026-10-31, checked on an iPhone).
 8. Release: performance check, loading state, deployment, portfolio write-up.
 
 ## 8. Definition of done (Phase 1)
 
-Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound are built too. New sheet, Save page and mobile support are built too (the mobile slice still needs a real-device check). Next: release.
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound are built too. New sheet, Save page and mobile support are built too (mobile checked on an iPhone, good enough). Next: release.
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.

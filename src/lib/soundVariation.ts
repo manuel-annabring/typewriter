@@ -21,14 +21,14 @@ export interface SoundSpec {
 const KEYS = ['key_1', 'key_2'] as const
 
 export const SOUND_SPECS: Readonly<Record<SoundId, SoundSpec>> = {
-  clack: { files: KEYS, rate: 1, level: 0.8, pitch: 0.04, gainDb: 1.5 },
-  space: { files: ['space_1'], rate: 1, level: 0.8, pitch: 0.03, gainDb: 1.5 },
-  thunk: { files: KEYS, rate: 0.8, level: 0.6, pitch: 0.03, gainDb: 1.5 },
-  bell: { files: ['bell'], rate: 1, level: 0.5, pitch: 0, gainDb: 0.75 },
+  clack: { files: KEYS, rate: 1, level: 0.6, pitch: 0.04, gainDb: 1.5 },
+  space: { files: ['space_1'], rate: 1, level: 0.65, pitch: 0.03, gainDb: 1.5 },
+  thunk: { files: KEYS, rate: 0.8, level: 0.45, pitch: 0.03, gainDb: 1.5 },
+  bell: { files: ['bell'], rate: 1, level: 0.75, pitch: 0, gainDb: 0.75 },
   lock: { files: KEYS, rate: 0.55, level: 0.8, pitch: 0.02, gainDb: 1 },
   lever: { files: ['key_2'], rate: 0.5, level: 0.8, pitch: 0.02, gainDb: 1 },
   zip: { files: ['return_slide'], rate: 1, level: 0.5, pitch: 0, gainDb: 0.5 },
-  stop: { files: ['return_stop'], rate: 1, level: 0.8, pitch: 0.02, gainDb: 1 },
+  stop: { files: ['return_stop'], rate: 1, level: 0.6, pitch: 0.02, gainDb: 1 },
 }
 
 /** Every clip the sounds use, once each (the key clips serve several sounds). */

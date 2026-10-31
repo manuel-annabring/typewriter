@@ -28,3 +28,9 @@ return_full.mp3   "Typewriter Carriage Return.wav" by ramsamba, 0 to 0.8 s
 
 Shift, Tab, Backspace, the margin-lock clunk and the lever press have no clips
 of their own: the engine plays the key clips lower and slower (playbackRate).
+
+paper_in.mp3      "typewriter-olivetti-lettra-22.wav" by keithpeter, 4.85 to 6.45 s (paper wound in)
+paper_out.mp3     same file, 100.05 to 101.3 s (paper wound out)
+                  https://freesound.org/people/keithpeter/sounds/123344/
+                  CC0, licence read on the Freesound page on 2026-10-31. The recording is quiet, so
+                  these two are high-passed at 80 Hz and boosted to -3 dB peak (hiss is audible).

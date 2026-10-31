@@ -7,7 +7,9 @@ import {
   DROOP_AT_REFERENCE,
   DROOP_RATE,
   DROOP_REFERENCE_LENGTH,
+  DROOP_RELAX_LENGTH,
   droopAngle,
+  freeDroop,
   TAIL_ANGLE,
   wrapAngleFor,
   type BendShape,
@@ -157,5 +159,33 @@ describe('alongFromTangent', () => {
     const after = bend(alongFromTangent(alongRest - 0.03, 0.03, tangentAlong))
     expect(after).toEqual(before)
     expect(alongFromTangent(alongRest, -0.245, tangentAlong)).toBeCloseTo(alongRest - 0.245 - tangentAlong, 12)
+  })
+})
+
+describe('freeDroop', () => {
+  const TOP_REST = 0.268
+  const free = (feed: number) => freeDroop(TOP_REST, PAGE_HEIGHT, feed, R)
+
+  it('leaves a page being typed on as it was: free length from the top edge, full droop', () => {
+    for (const feed of [-0.245, -0.1, -0.01]) {
+      const { freeLength, droopRate } = free(feed)
+      expect(freeLength).toBeCloseTo(TOP_REST + feed - BAIL_S, 12)
+      expect(droopRate).toBe(DROOP_RATE)
+    }
+  })
+
+  it('never lets more than the sheet stand free', () => {
+    expect(free(0.1).freeLength).toBeCloseTo(PAGE_HEIGHT, 12)
+    expect(free(0.42).freeLength).toBeCloseTo(PAGE_HEIGHT, 12)
+  })
+
+  it('relaxes the droop once the bottom edge has left the bail, and to nothing a little later', () => {
+    const bottomAtBail = BAIL_S - (TOP_REST - PAGE_HEIGHT) // the feed where the bottom edge reaches the bail
+    expect(free(bottomAtBail - 0.01).droopRate).toBe(DROOP_RATE)
+    const halfway = free(bottomAtBail + DROOP_RELAX_LENGTH / 2).droopRate
+    expect(halfway).toBeGreaterThan(0)
+    expect(halfway).toBeLessThan(DROOP_RATE)
+    expect(free(bottomAtBail + DROOP_RELAX_LENGTH).droopRate).toBe(0)
+    expect(free(0.42).droopRate).toBe(0)
   })
 })

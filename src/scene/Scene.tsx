@@ -54,6 +54,8 @@ const SETTLE_FRAMES = 120
 function Shadow() {
   useTypewriterStore((s) => s.cursor)
   useTypewriterStore((s) => s.pressedKeys)
+  // The sheet and its tail move through a swap; each phase change gives the shadow another SETTLE_FRAMES.
+  useTypewriterStore((s) => s.swap)
   useProgress((s) => s.progress)
   return (
     <ContactShadows

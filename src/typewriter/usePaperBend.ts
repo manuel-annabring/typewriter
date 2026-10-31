@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useRef, type RefObject } from 'react'
 import { MathUtils, Vector3, type BufferGeometry, type Mesh, type MeshStandardMaterial, type Object3D } from 'three'
+import { MOTION_ENABLED } from '../scene/cameraConfig.ts'
 import { LAMBDA_FEED, paperFeedM } from '../lib/carriage.ts'
 import {
   BEND_BEGIN_VERTEX,
@@ -11,6 +12,7 @@ import {
   TAIL_ANGLE,
   wrapAngleFor,
 } from '../lib/paperBend.ts'
+import { GAP_S, insertDone, insertFeedM, insertStartFeedM, pullDone, pullFeedM } from '../lib/sheetSwap.ts'
 import { useTypewriterStore } from '../store/typewriterStore.ts'
 
 /** Damping rate for MathUtils.damp (higher is faster): LAMBDA_FEED, in lib/carriage.ts where the return sound is timed from it. */
@@ -38,6 +40,7 @@ interface PaperUniforms {
   uPaperRadius: { value: number }
   uPaperWrap: { value: number }
   uPaperTopRest: { value: number }
+  uPaperHeight: { value: number }
   uPaperFrontSign: { value: number }
 }
 
@@ -57,9 +60,15 @@ interface StoredUniforms {
 
 interface PaperRig {
   uniforms: PaperUniforms
+  paper: Mesh
   strikeAlong: number
   paperHeight: number
   feed: number
+  /** The new-sheet swap: the phase last seen, seconds into it, and the feeds it runs between. */
+  swapSeen: 'idle' | 'pulling' | 'inserting'
+  swapT: number
+  pullFrom: number
+  insertFrom: number
 }
 
 /**
@@ -164,6 +173,7 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
         uPaperRadius: { value: 0 },
         uPaperWrap: { value: 0 },
         uPaperTopRest: { value: 0 },
+        uPaperHeight: { value: 0 },
         uPaperFrontSign: { value: 1 },
       }
       const next: StoredUniforms = { programKey: PROGRAM_KEY, uniforms }
@@ -178,8 +188,19 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
     // The top edge's distance along the sheet from the tangent point, unfed. The shader
     // adds the feed and takes off the bail arc to get the free length that droops.
     uniforms.uPaperTopRest.value = sheet.height / 2 + sheet.centre.clone().sub(tangent).dot(sheet.up)
+    uniforms.uPaperHeight.value = sheet.height
     uniforms.uPaperFrontSign.value = normal.dot(out) >= 0 ? 1 : -1
-    rig.current = { uniforms, strikeAlong, paperHeight: sheet.height, feed }
+    rig.current = {
+      uniforms,
+      paper,
+      strikeAlong,
+      paperHeight: sheet.height,
+      feed,
+      swapSeen: 'idle',
+      swapT: 0,
+      pullFrom: feed,
+      insertFrom: insertStartFeedM(radius, uniforms.uPaperWrap.value, uniforms.uPaperTopRest.value),
+    }
 
     // onBeforeCompile edits the built-in standard shader's source before three compiles
     // it, so lighting, colour space and texture sampling stay three's own code.
@@ -207,6 +228,7 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
       material.customProgramCacheKey = previousCacheKey
       material.needsUpdate = true
       paper.frustumCulled = previousCulled
+      paper.visible = true
       rig.current = null
     }
   }, [root])
@@ -214,7 +236,16 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
   useFrame((_, delta) => {
     const r = rig.current
     if (!r) return
-    const { cursor } = useTypewriterStore.getState()
+    const { cursor, swap } = useTypewriterStore.getState()
+    if (swap !== r.swapSeen) {
+      r.swapSeen = swap
+      r.swapT = 0
+      if (swap === 'pulling') r.pullFrom = r.feed
+    }
+    if (swap !== 'idle') {
+      stepSwap(r, swap, delta)
+      return
+    }
     const targetFeed = paperFeedM(cursor.row, r.strikeAlong, r.paperHeight)
     if (r.feed === targetFeed) return
     let next = MathUtils.damp(r.feed, targetFeed, LAMBDA_FEED, delta)
@@ -222,4 +253,41 @@ export function usePaperBend(root: RefObject<Object3D | null>): void {
     r.feed = next
     r.uniforms.uPaperFeed.value = next
   })
+}
+
+function setFeed(r: PaperRig, feed: number): void {
+  r.feed = feed
+  r.uniforms.uPaperFeed.value = feed
+}
+
+/**
+ * One frame of the new-sheet swap (lib/sheetSwap.ts). The pull feeds the old page up and out; when
+ * it is over the store swaps the page (so the canvas is redrawn while the sheet is hidden) and the
+ * insert feeds the fresh one in to row 0. Reduced motion skips both.
+ */
+function stepSwap(r: PaperRig, swap: 'pulling' | 'inserting', delta: number): void {
+  const { beginInsert, endSwap } = useTypewriterStore.getState()
+  const rowZeroFeed = paperFeedM(0, r.strikeAlong, r.paperHeight)
+  if (!MOTION_ENABLED) {
+    if (swap === 'pulling') beginInsert()
+    endSwap()
+    setFeed(r, rowZeroFeed)
+    return
+  }
+  r.swapT += delta
+  if (swap === 'pulling') {
+    setFeed(r, pullFeedM(r.swapT, r.pullFrom))
+    if (pullDone(r.swapT)) {
+      r.paper.visible = false
+      beginInsert()
+    }
+    return
+  }
+  if (r.swapT < GAP_S) return
+  r.paper.visible = true
+  setFeed(r, insertFeedM(r.swapT - GAP_S, r.insertFrom, rowZeroFeed))
+  if (insertDone(r.swapT)) {
+    setFeed(r, rowZeroFeed)
+    endSwap()
+  }
 }

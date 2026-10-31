@@ -9,7 +9,8 @@ export function pressKey(name: string): void {
   s.keyDown(name)
   runAction(name, s)
   // `s` is the state from before the action (the store replaces its state object on each set).
-  playSounds(soundsFor(name, s, useTypewriterStore.getState()))
+  // While the old page is pulled out nothing prints, so the keys stay silent too.
+  if (s.swap !== 'pulling') playSounds(soundsFor(name, s, useTypewriterStore.getState()))
 }
 
 function runAction(name: string, s: ReturnType<typeof useTypewriterStore.getState>): void {

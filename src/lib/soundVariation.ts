@@ -29,6 +29,8 @@ export const SOUND_SPECS: Readonly<Record<SoundId, SoundSpec>> = {
   lever: { files: ['key_2'], rate: 0.5, level: 0.8, pitch: 0.02, gainDb: 1 },
   zip: { files: ['return_slide'], rate: 1, level: 0.5, pitch: 0, gainDb: 0.5 },
   stop: { files: ['return_stop'], rate: 1, level: 0.4, pitch: 0.02, gainDb: 1 },
+  paperOut: { files: ['paper_out'], rate: 1, level: 0.5, pitch: 0.03, gainDb: 1 },
+  paperIn: { files: ['paper_in'], rate: 1, level: 0.5, pitch: 0.03, gainDb: 1 },
 }
 
 /** Every clip the sounds use, once each (the key clips serve several sounds). */

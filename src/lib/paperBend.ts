@@ -44,6 +44,28 @@ export const DROOP_RATE = DROOP_AT_REFERENCE / DROOP_REFERENCE_LENGTH ** 3
  */
 export const DROOP_STEPS = 24
 
+/**
+ * Once the sheet's bottom edge has left the bail (the page is being pulled out), the free part is
+ * no longer clamped there and would only droop: over this much more feed the droop relaxes to
+ * nothing and the lifted page runs straight at the bail's lean. Typing never gets near this (the
+ * bottom edge stays far below the bail), so ordinary pages are unchanged.
+ */
+export const DROOP_RELAX_LENGTH = 0.08
+
+/**
+ * The free length and droop rate to bend a sheet with. `topRest` is the top edge's distance from
+ * the tangent point unfed, `height` the sheet's height and `feed` the current feed. The free length
+ * is what stands above the bail, never more than the sheet itself; the rate fades to 0 as the
+ * bottom edge passes the bail. The GLSL twin is in BEND_VERTEX_PARS.
+ */
+export function freeDroop(topRest: number, height: number, feed: number, radius: number): { freeLength: number; droopRate: number } {
+  const bailS = radius * BAIL_WRAP
+  const freeLength = Math.min(Math.max(topRest + feed - bailS, 0), height)
+  const bottomS = topRest - height + feed
+  const k = Math.min(1, Math.max(0, 1 - (bottomS - bailS) / DROOP_RELAX_LENGTH))
+  return { freeLength, droopRate: DROOP_RATE * k }
+}
+
 /** How much of the ink shows through on the back of the sheet (0 = plain paper). */
 export const BACK_INK = 0.12
 
@@ -129,7 +151,7 @@ export function bendPoint(s: number, shape: BendShape): BentPoint {
 /**
  * Vertex shader declarations: uniforms and the GLSL twin of `bendPoint`. uPaperWrap is
  * its wrapAngle; the free length is uPaperTopRest (the top edge's distance from the
- * tangent point at rest) plus the feed, minus the bail arc.
+ * tangent point at rest) plus the feed, minus the bail arc, and the droop follows `freeDroop`.
  */
 export const BEND_VERTEX_PARS = /* glsl */ `
 uniform float uPaperFeed;
@@ -139,13 +161,15 @@ uniform vec3 uPaperTangent;
 uniform float uPaperRadius;
 uniform float uPaperWrap;
 uniform float uPaperTopRest;
+uniform float uPaperHeight;
 uniform float uPaperFrontSign;
 const float PAPER_BAIL = ${BAIL_WRAP.toFixed(6)};
 const float PAPER_DROOP_RATE = ${DROOP_RATE.toFixed(6)};
+const float PAPER_DROOP_RELAX = ${DROOP_RELAX_LENGTH.toFixed(6)};
 const int PAPER_DROOP_STEPS = ${DROOP_STEPS};
-float paperDroopAngle(float u, float freeLength) {
+float paperDroopAngle(float u, float freeLength, float rate) {
   float rest = max(freeLength - u, 0.0);
-  return PAPER_DROOP_RATE * (freeLength * freeLength * freeLength - rest * rest * rest);
+  return rate * (freeLength * freeLength * freeLength - rest * rest * rest);
 }
 vec2 paperBendPoint(float s, out vec2 bentNormal) {
   float bailS = uPaperRadius * PAPER_BAIL;
@@ -157,15 +181,17 @@ vec2 paperBendPoint(float s, out vec2 bentNormal) {
     bentNormal = vec2(sinPsi, cosPsi);
     return vec2(uPaperRadius * sinPsi + straight * cosPsi, uPaperRadius * cosPsi - uPaperRadius - straight * sinPsi);
   }
-  float freeLength = max(uPaperTopRest + uPaperFeed - bailS, 0.0);
+  float freeLength = clamp(uPaperTopRest + uPaperFeed - bailS, 0.0, uPaperHeight);
+  float bottomS = uPaperTopRest - uPaperHeight + uPaperFeed;
+  float rate = PAPER_DROOP_RATE * clamp(1.0 - (bottomS - bailS) / PAPER_DROOP_RELAX, 0.0, 1.0);
   float u = s - bailS;
   float stepLength = u / float(PAPER_DROOP_STEPS);
   vec2 bent = vec2(uPaperRadius * sin(PAPER_BAIL), uPaperRadius * cos(PAPER_BAIL) - uPaperRadius);
   for (int i = 0; i < PAPER_DROOP_STEPS; i++) {
-    float lean = PAPER_BAIL + paperDroopAngle((float(i) + 0.5) * stepLength, freeLength);
+    float lean = PAPER_BAIL + paperDroopAngle((float(i) + 0.5) * stepLength, freeLength, rate);
     bent += stepLength * vec2(cos(lean), -sin(lean));
   }
-  float lean = PAPER_BAIL + paperDroopAngle(u, freeLength);
+  float lean = PAPER_BAIL + paperDroopAngle(u, freeLength, rate);
   bentNormal = vec2(sin(lean), cos(lean));
   return bent;
 }

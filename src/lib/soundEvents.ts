@@ -3,8 +3,9 @@
 // leave the cursor unchanged, which is how they are told apart from accepted ones.
 
 import { LINE_FEED_SETTLE_S, returnSlideSeconds } from './carriage.ts'
+import { GAP_S, INSERT_S, PULL_S } from './sheetSwap.ts'
 
-export type SoundId = 'clack' | 'space' | 'thunk' | 'bell' | 'lock' | 'lever' | 'zip' | 'stop'
+export type SoundId = 'clack' | 'space' | 'thunk' | 'bell' | 'lock' | 'lever' | 'zip' | 'stop' | 'paperOut' | 'paperIn'
 
 /** One sound to start: `delayS` after the press, and for `zip` how long it should run. */
 export interface SoundCue {
@@ -42,6 +43,19 @@ function returnCues(cols: number): SoundCue[] {
   const cues: SoundCue[] = []
   if (slideS - ZIP_DELAY_S >= ZIP_MIN_S) cues.push({ id: 'zip', delayS: ZIP_DELAY_S, durationS: slideS - ZIP_DELAY_S })
   cues.push({ id: 'stop', delayS: Math.max(slideS, LINE_FEED_SETTLE_S) })
+  return cues
+}
+
+/**
+ * The sounds of a new sheet, timed to the swap (`sheetSwap.ts`): the carriage goes home while the old
+ * page is wound out, then the fresh one is wound in. `col` is the cursor column when the button was
+ * pressed. Reduced motion jumps, so it only plays the insert.
+ */
+export function newSheetSounds(col: number, motion = true): SoundCue[] {
+  if (!motion) return [{ id: 'paperIn', delayS: 0 }]
+  const cues: SoundCue[] = [{ id: 'paperOut', delayS: 0, durationS: PULL_S }]
+  if (col > 0) cues.push(...returnCues(col))
+  cues.push({ id: 'paperIn', delayS: PULL_S + GAP_S, durationS: INSERT_S })
   return cues
 }
 

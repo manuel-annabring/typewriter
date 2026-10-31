@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { LINE_FEED_SETTLE_S, returnSlideSeconds } from './carriage.ts'
-import { BELL_DELAY_S, soundsFor, type SoundState } from './soundEvents.ts'
+import { BELL_DELAY_S, newSheetSounds, soundsFor, type SoundState } from './soundEvents.ts'
+import { GAP_S, INSERT_S, PULL_S } from './sheetSwap.ts'
 
 const at = (row: number, col: number, bellSeq = 0): SoundState => ({ cursor: { row, col }, bellSeq })
 const ids = (...args: Parameters<typeof soundsFor>) => soundsFor(...args).map((c) => c.id)
@@ -67,5 +68,23 @@ describe('soundsFor', () => {
 
   it('returns nothing for a name it does not know', () => {
     expect(ids('Paper', at(0, 0), at(0, 0))).toEqual([])
+  })
+})
+
+describe('newSheetSounds', () => {
+  it('winds the old page out, then the new one in, timed to the swap', () => {
+    const cues = newSheetSounds(0)
+    expect(cues).toEqual([
+      { id: 'paperOut', delayS: 0, durationS: PULL_S },
+      { id: 'paperIn', delayS: PULL_S + GAP_S, durationS: INSERT_S },
+    ])
+  })
+
+  it('adds the carriage return when the carriage is not at the left', () => {
+    expect(newSheetSounds(30).map((c) => c.id)).toEqual(['paperOut', 'zip', 'stop', 'paperIn'])
+  })
+
+  it('plays only the insert with reduced motion', () => {
+    expect(newSheetSounds(30, false)).toEqual([{ id: 'paperIn', delayS: 0 }])
   })
 })

@@ -13,6 +13,11 @@ interface TypewriterState {
   bellSeq: number
   /** The glyph printed by the latest typeChar. The paper draws just this one; null means redraw from `lines`. */
   lastPrint: { row: number; col: number; char: string; seq: number } | null
+  /**
+   * The new-sheet swap (lib/sheetSwap.ts). `pulling`: the old page is leaving and typing is ignored;
+   * `inserting`: the fresh page is empty and typing is live. `usePaperBend` drives the phases.
+   */
+  swap: 'idle' | 'pulling' | 'inserting'
   /** Contract node names (e.g. 'Key_A') currently held down. Slice 3 animates from this. */
   pressedKeys: readonly string[]
   // Debug (slice 2)
@@ -25,7 +30,12 @@ interface TypewriterState {
   space: () => void
   returnCarriage: () => void
   backspace: () => void
+  /** Starts the swap: the carriage goes home, the old page is pulled out. Ignored while one is running. */
   newSheet: () => void
+  /** End of the pull: the page is empty, the cursor at row 0, column 0. Called by `usePaperBend` once the old page is out of sight. */
+  beginInsert: () => void
+  /** End of the insert. Called by `usePaperBend`. */
+  endSwap: () => void
 }
 
 const addLog = (log: readonly string[], entry: string) => [entry, ...log].slice(0, LOG_LIMIT)
@@ -36,6 +46,7 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
   status: 'typing',
   bellSeq: 0,
   lastPrint: null,
+  swap: 'idle',
   pressedKeys: [],
   lastChar: null,
   log: [],
@@ -47,6 +58,7 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
 
   typeChar: (rawChar) =>
     set((s) => {
+      if (s.swap === 'pulling') return { log: addLog(s.log, 'typeChar ignored (new sheet)') }
       // pressKey passes the lowercase key name's character, so Shift is applied here.
       const shifted = s.pressedKeys.some((k) => SHIFT_KEYS.includes(k))
       const char = shifted && /^[a-z]$/.test(rawChar) ? rawChar.toUpperCase() : rawChar
@@ -65,6 +77,7 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
     }),
   space: () =>
     set((s) => {
+      if (s.swap === 'pulling') return { log: addLog(s.log, 'space ignored (new sheet)') }
       const cursor = advance(s.cursor)
       if (!cursor) return { log: addLog(s.log, 'space ignored') }
       return {
@@ -78,6 +91,7 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
   // State only; useCarriageAnimation derives the slide and the line feed from `cursor`.
   returnCarriage: () =>
     set((s) => {
+      if (s.swap === 'pulling') return { log: addLog(s.log, 'returnCarriage ignored (new sheet)') }
       const cursor = nextLine(s.cursor)
       if (cursor.row === s.cursor.row && cursor.col === s.cursor.col) {
         return { log: addLog(s.log, 'returnCarriage ignored') }
@@ -87,9 +101,25 @@ export const useTypewriterStore = create<TypewriterState>()((set) => ({
   // Authentic: moves the carriage back one column without erasing; typing over it overstrikes.
   backspace: () =>
     set((s) => {
+      if (s.swap === 'pulling') return { log: addLog(s.log, 'backspace ignored (new sheet)') }
       const cursor = back(s.cursor)
       if (!cursor) return { log: addLog(s.log, 'backspace ignored') }
       return { cursor, status: 'typing', log: addLog(s.log, 'backspace') }
     }),
-  newSheet: () => set((s) => ({ log: addLog(s.log, 'newSheet') })),
+  // The old page stays in `lines` until beginInsert so it can leave the platen with its text; only the
+  // carriage goes home right away (useCarriageAnimation derives it from the column).
+  newSheet: () =>
+    set((s) => {
+      if (s.swap !== 'idle') return { log: addLog(s.log, 'newSheet ignored') }
+      return { swap: 'pulling', cursor: { row: s.cursor.row, col: 0 }, status: 'typing', log: addLog(s.log, 'newSheet') }
+    }),
+  // `lastPrint` is kept: its seq must stay consecutive so the paper texture draws the next glyph on
+  // its own; the new `lines` array makes it redraw the (blank) page first.
+  beginInsert: () =>
+    set((s) =>
+      s.swap === 'pulling'
+        ? { swap: 'inserting', lines: [''], cursor: { row: 0, col: 0 }, status: 'typing', log: addLog(s.log, 'beginInsert') }
+        : s,
+    ),
+  endSwap: () => set((s) => (s.swap === 'inserting' ? { swap: 'idle', log: addLog(s.log, 'endSwap') } : s)),
 }))

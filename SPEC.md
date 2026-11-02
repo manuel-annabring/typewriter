@@ -19,7 +19,7 @@ Purpose:
 | App | Vite, React, TypeScript |
 | State | Zustand (typing state lives in the store, not in components) |
 | Model | Blender, exported as GLB, turned into components with gltfjsx |
-| Hosting | TBD |
+| Hosting | GitHub Pages: a project site at `https://manuel-annabring.github.io/typewriter/`, deployed by `.github/workflows/deploy.yml` |
 
 Pin exact versions in `CLAUDE.md` when the project is created.
 
@@ -98,6 +98,13 @@ What NOT to trust:
   - Performance: no change. r3f's default `dpr` is [1, 2], the whole download is about 2.5 MB, the paper texture stays 1680 x 2376 px (4 MP, under iOS's canvas limit). If keystrokes are janky on a phone, the fallback is a lower on-screen texture resolution (`PX_PER_MM` 6) with Save page still drawn at 8, which needs the draw scale as a parameter.
   - Device test (2026-10-31, Manuel's iPhone, dev server over wifi): "works good enough". Desktop stays the main target, so mobile is closed as a stretch goal. Not individually reported and so not confirmed: audio unlock, the Save page download on iOS, WebGL context loss after backgrounding the tab, landscape typing (see above).
 
+- **Release** (done, 2026-11-02): live at `https://manuel-annabring.github.io/typewriter/`.
+  - Hosting: GitHub Pages, source "GitHub Actions". `.github/workflows/deploy.yml` runs typecheck, lint, tests and build on every push to `main`, then publishes `dist/`; it needs no secrets. The site is a project site, so the build uses `base: '/typewriter/'` (`vite.config.ts`; the dev server stays at `/`, `vite preview` uses the base through `isPreview`). Every public file URL goes through `import.meta.env.BASE_URL` (the two fonts, the audio, the model; `tools/gen-model.mjs` patches the generated model file the same way).
+  - Page basics: title, description, theme colour, SVG favicon, Open Graph and Twitter tags with a 1200 x 630 `public/og.png` (the production build at its resting view), and a preload link for the model. No 404 page, robots file or sitemap (one page, no routes).
+  - Failure and loading states: `SceneErrorBoundary` (`src/ui/SceneErrorBoundary.tsx`) wraps the app; a missing WebGL context shows a short message, any other failed start (the model download) shows another with a Reload button, in the loader's look. Before this both gave a blank white page. A `<noscript>` line and a paper-coloured `html, body`. The loader itself is still the plain "Loading NN%" text.
+  - README: pitch, what you can do, how it is built, numbers, run commands, how it was built with Claude, credits.
+  - Performance numbers: section 5.
+
 ### Out of scope for now
 
 - Visible typebar swing per letter, shift mechanism, ribbon animation.
@@ -132,7 +139,8 @@ The code finds and animates parts by name, so the names and rules below are fixe
 - Origins at pivot points (keys at the center, lever at the hinge, `Carriage` at its rest position at the start of a line).
 - Materials named: `Mat_Body`, `Mat_KeyCream`, `Mat_KeyDark`, `Mat_Wood`, `Mat_Platen`, `Mat_Metal`, `Mat_Paper`, `Mat_Interior` (amendment, slice 6c cavity: the dark matte inside of the keyboard well, used by `Body`'s second material slot).
 - `Body` therefore has two material slots (`Mat_Body`, `Mat_Interior`) and exports as a group named `Body` with child meshes `Body_1` and `Body_2`; `StrikePoint` stays its child.
-- Budgets (measured 2026-10-29 on an M1 Pro MacBook Pro, confirmed): GLB under 1.5 MB (now 917 kB, 89 kB brotli); model under 100k triangles (now 36k; the ground-shadow depth pass renders them again while something moves); main pass about 100 draw calls (now 99); 60 fps at devicePixelRatio 2 while typing and during the carriage return (met, vsync-capped); entry JS under 300 kB (now 234 kB, 74 kB gzip), the 3D scene is a separate lazy chunk (1.08 MB, 294 kB gzip); sound adds a lazy engine chunk of 2 kB and 60 kB of mp3 clips under `public/audio/` (budget 150 kB), fetched once the model has loaded.
+- Budgets (measured 2026-10-29 on an M1 Pro MacBook Pro, confirmed): GLB under 1.5 MB (now 917 kB, 89 kB brotli); model under 100k triangles (now 36k; the ground-shadow depth pass renders them again while something moves); main pass about 100 draw calls (now 99); 60 fps at devicePixelRatio 2 while typing and during the carriage return (met, vsync-capped); entry JS under 300 kB (now 241 kB, 77 kB gzip), the 3D scene is a separate lazy chunk (1.09 MB, 296 kB gzip); sound adds a lazy engine chunk of 2 kB and 85 kB of mp3 clips in use under `public/audio/` (100 kB with the unused alternative; budget 150 kB), fetched once the model has loaded.
+- Release check (2026-11-02, production build under `/typewriter/`, M1 Pro, browser pane; then the live site): median frame 16.7 ms and p95 17.6 ms at devicePixelRatio 2, idle, while typing 40 keys and during a carriage return (the pane's occasional 100 to 150 ms hitches also happen with no input, so they are not the app); the console shows only the known `THREE.Clock` warning; the model is requested once (the preload link in `index.html` starts it with the page and the loader reuses it). Slow-network load was not measured (estimate: about 2 s on fast 4G). GitHub Pages serves the GLB uncompressed (917 kB, so about 1.3 MB before the machine appears), gzips the JS, and caches everything for 10 minutes (`max-age=600`); neither can be changed there.
 - Before each export, run a contract check (names present, transforms applied, origins sensible).
 
 ### Key label atlas (amendment, slice 6d)
@@ -190,11 +198,11 @@ Each step ends with something visible, is tested, and is committed before the ne
    - Done: optimization pass (ground shadow redrawn only while something moves, scene code-split behind the loader; numbers in section 5).
    - To do (polish): material tuning (roughness and metalness per `Mat_*`); optional Inter subsetting (352 kB font, key labels use about 40 glyphs).
 7. Phase 2 slices, one at a time: ~~sound~~ (done, with CC0 clips), ~~intro camera~~ (done, camera: limits, intro, reset), ~~new sheet~~ (done), ~~save page~~ (done), ~~mobile~~ (done 2026-10-31, checked on an iPhone).
-8. Release: performance check, loading state, deployment, portfolio write-up.
+8. ~~Release~~ (done 2026-11-02): performance check (section 5), loading and failure states, GitHub Pages deploy, page basics, README. Details under "Release" in section 4.
 
 ## 8. Definition of done (Phase 1)
 
-Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound are built too. New sheet, Save page and mobile support are built too (mobile checked on an iPhone, good enough). Next: release.
+Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: the whole sheet wrapped around the platen is built (see CLAUDE.md "Paper bend"). The camera (limits, intro, reset, writing view) and sound are built too. New sheet, Save page and mobile support are built too (mobile checked on an iPhone, good enough). Release done 2026-11-02 (live on GitHub Pages).
 
 - Typing on a physical keyboard prints the right characters on the paper.
 - Clicking a 3D key does the same and animates the key.
@@ -215,6 +223,15 @@ Status 2026-10-29: all points below are met; Phase 1 is done. Phase 2 so far: th
 - Lines and characters per page (the paper format is decided: A4).
 - ~~Camera: orbit limits, or a fixed view?~~ Decided 2026-10-29: free orbit inside limits (no pan, elevation 8° to 61°, azimuth ±70° round the front, 0.30 to 1.50 m).
 - ~~Is the page content kept between visits (localStorage)?~~ Decided 2026-10-31: no, out of scope. Every visit starts with a fresh sheet; Save page (section 4) is the way to keep a page. Only the sound mute choice is kept.
-- Hosting and domain.
+- ~~Hosting and domain~~ Decided 2026-11-02: GitHub Pages on the free `manuel-annabring.github.io/typewriter/` address (no custom domain). A custom domain later means changing `base` in `vite.config.ts` and the absolute URLs in the Open Graph tags in `index.html`.
 - ~~Sound source~~ Decided 2026-10-30: everything was built and tuned on synthesized placeholders first, then replaced by seven CC0 clips from Freesound (licences read on each page, listed in `public/audio/LICENSES.txt`). The engine only sees `AudioBuffer`s, so a different clip set is a change to `SOUND_SPECS`.
-- Project title and any on-screen hint text.
+- ~~Project title and any on-screen hint text~~ Decided 2026-11-02: title "Typewriter" with the tagline "a typewriter you can type on, in the browser"; the one hint reads "Click or tap the paper, or use Writing view, to read what you type".
+
+### After release (not planned, in rough order of value)
+
+- Confirm on an iPhone, on the live URL: audio unlock, the Save page download, and coming back after backgrounding the tab (not individually reported before). If the canvas freezes after backgrounding, add a WebGL context-restore handler (the error boundary covers only failed starts).
+- Tab (the proposal is the next 5-column stop) and Shift (does it change the printed character, and what do the caps show?): both still do nothing but play a sound and register as pressed.
+- Landscape phone: the writing view shows the strike point but not the keys.
+- Material tuning (roughness and metalness per `Mat_*`) and the rest of the modeling to-do in section 7 step 6 (`PaperHolder` is partly modeled).
+- Inter subsetting (352 kB to about 20 kB; needs a generated file). Draco or Meshopt for the GLB would only matter on a host that cannot compress it, and costs a dependency and a gltfjsx change.
+- A case-study page or write-up beyond the README, a code licence (the repo has none, so the default is all rights reserved), and the concept sheet in `reference/` (AI generated, now public).
